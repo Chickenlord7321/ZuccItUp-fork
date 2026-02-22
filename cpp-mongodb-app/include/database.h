@@ -17,8 +17,8 @@ private:
 
 public:
     // Constructor - connects to MongoDB
-    Database(const string& uri = "mongodb+srv://keenan:Mowgli4$@cluster0.oorsnye.mongodb.net/?appName=Cluster0", 
-             const string& dbName = "myapp");
+    Database(const string& uri = "", 
+             const string& dbName = "test_375");
     
     // Read operations
     bsoncxx::document::value findOne(const string& collection, 

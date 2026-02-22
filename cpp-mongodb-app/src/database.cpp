@@ -1,6 +1,8 @@
 #include "database.h"
 #include <iostream>
 #include <mongocxx/instance.hpp>
+#include <mongocxx/options/client.hpp>
+#include <mongocxx/options/server_api.hpp>
 
 using namespace std;
 
@@ -9,7 +11,13 @@ static mongocxx::instance inst{};
 
 Database::Database(const string& uri, const string& dbName) {
     try {
-        client = mongocxx::client(mongocxx::uri(uri));
+        // Set up Stable API options as recommended by MongoDB Atlas
+        mongocxx::options::client client_options;
+        const auto api = mongocxx::options::server_api{mongocxx::options::server_api::version::k_version_1};
+        client_options.server_api_opts(api);
+        
+        // Create client with options
+        client = mongocxx::client(mongocxx::uri(uri), client_options);
         db = client[dbName];
         
         // Verify connection

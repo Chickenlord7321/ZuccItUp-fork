@@ -36,6 +36,9 @@ RUN git clone --depth 1 https://github.com/mongodb/mongo-cxx-driver.git && \
 WORKDIR /app
 COPY . .
 
+# Clean build directory if it exists
+RUN rm -rf build
+
 # Build application
 RUN mkdir -p build && \
     cd build && \
@@ -45,9 +48,14 @@ RUN mkdir -p build && \
 # Expose port for future extensions
 EXPOSE 8080
 
-# Set environment variables
-ENV MONGODB_URI=mongodb+srv://keenan:Mowgli4$@cluster0.oorsnye.mongodb.net/?appName=Cluster0
-ENV MONGODB_DATABASE=myapp
+# Set default environment variables (can be overridden at runtime)
+ENV MONGODB_DATABASE=test_375
+ENV APP_ENV=production
+ENV APP_LOG_LEVEL=INFO
+ENV MONGODB_TIMEOUT_MS=5000
+
+# Run the application
+CMD ["./build/mongodb_app"]
 ENV APP_ENV=production
 
 # Run application

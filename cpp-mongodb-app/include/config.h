@@ -22,8 +22,8 @@ private:
 
 public:
     Config() {
-        mongodb_uri = getEnv("MONGODB_URI", "mongodb+srv://keenan:Mowgli4$@cluster0.oorsnye.mongodb.net/?appName=Cluster0");
-        mongodb_database = getEnv("MONGODB_DATABASE", "myapp");
+        mongodb_uri = getEnv("MONGODB_URI", "");
+        mongodb_database = getEnv("MONGODB_DATABASE", "test_375");
         mongodb_timeout_ms = stoi(getEnv("MONGODB_TIMEOUT_MS", "5000"));
         app_env = getEnv("APP_ENV", "development");
         log_level = getEnv("APP_LOG_LEVEL", "INFO");
