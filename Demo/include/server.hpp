@@ -88,4 +88,4 @@ public:
 	bool connect(const string username, const string password);
 };
 
-#endif SERVER_H
+#endif
