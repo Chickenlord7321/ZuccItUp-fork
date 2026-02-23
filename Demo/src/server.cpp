@@ -24,9 +24,9 @@ Server::Server() {
 		// ! Important! Do not end SQL strings with ";", as much as your fingers might want to.
 		// ! This causes errors because Oracle doesn't need semi-colons when you're using the OCCI library.
 
-	insert_order_sql =
-    	"INSERT INTO orders (custName, items, destination) "
-    	"VALUES (:1, SYSDATE, :2, :3, :4)";
+    insert_order_sql =
+        "INSERT INTO orders (custName, items, destination) "
+        "VALUES (:1, :2, :3)";
 
 	insert_menu_sql =
 		"INSERT INTO menu (name, description, price) "
