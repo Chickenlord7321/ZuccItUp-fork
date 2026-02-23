@@ -92,6 +92,10 @@ int main() {
 		oracle_password = input_password("Enter Oracle password: ");
 	   } while (!svr.connect(oracle_username, oracle_password));
 	cout << "Credentials verified!\n";;
+
+	   svr.dropTable("orders"); //drops tables
+	   svr.dropTable("menu");
+
 	   svr.createTable("orders"); //Creates initial tables
 	   svr.createTable("menu");
 
