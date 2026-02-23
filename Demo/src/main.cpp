@@ -108,8 +108,7 @@ int main() {
 //prompts user for input and displays options
 int options (){
 	int arg = 0;
-	double total = 0.0;
-	string name, item, location, arg_str, total_str;
+	string name, item, location, arg_str;
 
 	cout << "Enter number to select option \n";
 	cout << "1 View menu\n";
@@ -140,16 +139,7 @@ int options (){
 		   cout << "Enter building\n";
 		   getline(cin, location);
 
-		   cout << "Enter total (will be automatic later)\n";
-		   getline(cin, total_str);
-		   try {
-			   total = stod(total_str);
-		   } catch (...) {
-			   cout << "Invalid total. Please enter a valid number.\n";
-			   return 0;
-		   }
-
-		   svr.insertOrder(name, item, location, total);
+		   svr.insertOrder(name, item, location);
 
 	   } else if (arg == 4) {
 		   cout << " Closing...Goodbye\n";

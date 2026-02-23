@@ -25,7 +25,7 @@ Server::Server() {
 		// ! This causes errors because Oracle doesn't need semi-colons when you're using the OCCI library.
 
 	insert_order_sql =
-    	"INSERT INTO orders (custName, items, destination, total) "
+    	"INSERT INTO orders (custName, items, destination) "
     	"VALUES (:1, SYSDATE, :2, :3, :4)";
 
 	insert_menu_sql =
@@ -82,8 +82,7 @@ void Server::createTable(const string& table_name) {
 				"CREATE TABLE orders ("
 				"custName    VARCHAR(20),"
 				"items       VARCHAR(100),"
-				"destination VARCHAR(10),"
-				"total       NUMBER(5,2)"
+				"destination VARCHAR(10)"
 				")";
 		} else if (table_name == "menu") {
 			sql =
@@ -160,7 +159,6 @@ void Server::displayTable(const string& table_name) {
                  << setw(20) << "Customer"
                  << setw(30) << "Items"
                  << setw(15) << "Destination"
-                 << setw(10) << "Total" << "\n"
                  << string(90, '-') << "\n";
 
             while (rs->next()) {
@@ -205,12 +203,11 @@ void Server::displayTable(const string& table_name) {
 }
 
 void Server::insertOrder(const string& custName, const string& items,
-                         const string& destination, double total) {
+                         const string& destination) {
     try {
         insert_order_query->setString(1, custName);
         insert_order_query->setString(2, items);
         insert_order_query->setString(3, destination);
-        insert_order_query->setDouble(4, total);
 
         insert_order_query->executeUpdate();
         conn->commit();
