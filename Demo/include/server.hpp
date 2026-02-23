@@ -95,7 +95,7 @@ public:
 
 	void dropTable(const string& table_name);
 
-	void insertOrder(const string& custName, const string& items,const string& destination, double total);
+	//void insertOrder(const string& custName, const string& items,const string& destination, double total);
 
 	void insertMenu(const string& name, const string& description, double price);
 
