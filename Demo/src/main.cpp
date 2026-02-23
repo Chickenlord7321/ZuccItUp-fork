@@ -143,7 +143,11 @@ int options (){
 		   cout << "Enter building\n";
 		   getline(cin, location);
 
-		   svr.insertOrder(name, item, location);
+			try {
+    			svr.insertOrder(name, item, location);
+			} catch (const ServerException& e) {
+    			cout << e << endl;
+			}
 
 	   } else if (arg == 4) {
 		   cout << " Closing...Goodbye\n";
