@@ -72,9 +72,13 @@ private:
 
 	// Prepared SQL queries go here
 		// e.g. string create_account_sql;
+	string insert_order_sql;
+	string insert_menu_sql;
 
 	// Prepared query statements go here
 		// e.g. Statement* create_account_query;
+	Statement* insert_order_query;
+	Statement* insert_menu_query;
 
 public:
 	Server();	// constructor
@@ -86,6 +90,22 @@ public:
 	 * @param password Your Oracle password
 	 */
 	bool connect(const string username, const string password);
+
+	void createTable(const string& table_name);
+
+	void dropTable(const string& table_name);
+
+	void insertOrder(const string& custName, const string& items,const string& destination, double total);
+
+	void insertMenu(const string& name, const string& description, double price);
+
+	void populateMenu();
+
+	void displayTable(const string& table_name);
+
+	void insertOrder(const string& custName, const string& items,const string& destination, double total);
 };
+
+
 
 #endif

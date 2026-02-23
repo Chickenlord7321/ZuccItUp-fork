@@ -89,8 +89,71 @@ int main() {
 	do {
 		oracle_username = input_str("Enter Oracle username: ");
 		oracle_password = input_password("Enter Oracle password: ");
-	} while (!svr.connect(oracle_username, oracle_password));
-	cout << "Credentials verified!\n";
+	   } while (!svr.connect(oracle_username, oracle_password));
+	cout << "Credentials verified!\n";;
+	   svr.createTable("orders"); //Creates initial tables
+	   svr.createTable("menu");
 
-	cout << "Goodbye!\n";
+	   svr.populateMenu();//populates menu to have 3 options
+
+	   while(options() != 4){ //displays menu till user wants to quit
+		   options();
+	   }
+
+	   svr.dropTable("orders"); //drops tables
+	   svr.dropTable("menu");
+}
+
+//prompts user for input and displays options
+int options (){
+	int arg = 0;
+	double total = 0.0;
+	string name, item, location, arg_str, total_str;
+
+	cout << "Enter number to select option \n";
+	cout << "1 View menu\n";
+	cout << "2 View orders\n";
+	cout << "3 Make orders\n";
+	cout << "4 Quit\n";
+
+	getline(cin, arg_str);
+	try {
+		arg = stoi(arg_str);
+	} catch (...) {
+		cout << "Invalid input. Please enter a number.\n";
+		return 0;
+	}
+
+	   if (arg == 1) {
+		   svr.displayTable("menu");
+	   } else if (arg == 2) {
+		   svr.displayTable("orders");
+	   } else if (arg == 3) {
+		   //insert order
+		   cout << "Enter your name\n";
+		   getline(cin, name);
+
+		   cout << "Enter item you wish to order (for multiple separate by comma)\n";
+		   getline(cin, item);
+
+		   cout << "Enter building\n";
+		   getline(cin, location);
+
+		   cout << "Enter total (will be automatic later)\n";
+		   getline(cin, total_str);
+		   try {
+			   total = stod(total_str);
+		   } catch (...) {
+			   cout << "Invalid total. Please enter a valid number.\n";
+			   return 0;
+		   }
+
+		   svr.insertOrder(name, item, location, total);
+
+	   } else if (arg == 4) {
+		   cout << " Closing...Goodbye\n";
+		   return 4;
+	   }
+
+	return 0;
 }
