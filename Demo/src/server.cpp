@@ -73,23 +73,24 @@ bool Server::connect(const string username, const string password) {
 	}
 }
 
-void Server::createTable(const string& table_name){
+void Server::createTable(const string& table_name) {
 	try {
 		string sql;
-        	"INSERT INTO orders (custName, items, destination, total) "
-			sql = 
-				"CREATE TABLE orders ("
-				"custName	VARCHAR(20),"
-				"items	VARCHAR(100),"
-				"destination VARCHAR(10),"
-				"total NUMBER(4,2)"	
-				")";
-		} else if(table_name == "menu"){
+
+		if (table_name == "orders") {
 			sql =
-				"CREATE TABLE menu("
-				"name VARCHAR(20),"
+				"CREATE TABLE orders ("
+				"custName    VARCHAR(20),"
+				"items       VARCHAR(100),"
+				"destination VARCHAR(10),"
+				"total       NUMBER(5,2)"
+				")";
+		} else if (table_name == "menu") {
+			sql =
+				"CREATE TABLE menu ("
+				"name        VARCHAR(20),"
 				"description VARCHAR(100),"
-				"price NUMBER(2,2)"
+				"price       NUMBER(5,2)"
 				")";
 		} else {
 			throw ServerException("createTable()", "Unknown table name: " + table_name);
@@ -99,10 +100,12 @@ void Server::createTable(const string& table_name){
 		stmt->executeUpdate();
 		conn->terminateStatement(stmt);
 		conn->commit();
-		cout<<"Table " <<table_name <<" created\n";
-            insert_order_query->setString(2, items);
+		cout << "Table '" << table_name << "' created.\n";
+
+	} catch (SQLException& e) {
 		throw ServerException("createTable()", e.getMessage());
 	}
+}
 	
 
 //drops table specifed by table_name
