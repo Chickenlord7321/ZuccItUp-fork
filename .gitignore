@@ -53,3 +53,5 @@ zuccItUp
 
 # debug information files
 *.dwo
+.env
+.env.local
