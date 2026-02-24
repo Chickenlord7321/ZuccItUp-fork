@@ -1,0 +1,14 @@
+
+CREATE TABLE menu(
+    name VARCHAR(20),
+    description VARCHAR(100),
+    price NUMBER(2,2)
+);
+
+CREATE TABLE order(
+    custName VARCHAR(50) NOT NULL,
+    orderTime DATE NOT NULL,
+    contents VARCHAR(100),
+    destination VARCHAR(10) 
+    total NUMBER(4,2) CHECK (total >= 0)
+);
