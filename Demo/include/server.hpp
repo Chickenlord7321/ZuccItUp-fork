@@ -10,6 +10,7 @@
 
 #include <occi.h>  // main header for Oracle Call Interface
 	using namespace oracle::occi;
+#include <bits/stdc++.h>	// for vector
 #include <iostream>
 #include <string>
 	using namespace std;
@@ -86,6 +87,8 @@ public:
 	 * @param password Your Oracle password
 	 */
 	bool connect(const string username, const string password);
+
+	vector<string> get_vendors();
 };
 
 #endif
