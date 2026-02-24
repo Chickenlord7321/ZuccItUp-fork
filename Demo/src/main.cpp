@@ -64,32 +64,6 @@ string input_str(const string msg) {
 	return input;
 }
 
-// Get integer input from user
-int input_int(const string msg, const int min = INT_MIN, const int max = INT_MAX) {
-	int answer;
-	string throwaway;
-
-	cout << msg;
-	// If the user does not input an integer, prompt them to try again. 
-	// If the the user inputs an integer that isn't within the min and max, prompt them to try again.
-	while (!(cin >> answer) || answer < min || answer > max) {
-		// Clean out cin and the buffer.
-		cin.clear();
-		getline(cin, throwaway);
-
-		// Quit if user types 'Q'
-		if (to_lower(throwaway) == "q") {
-			cout << "Goodbye!" << endl;
-			exit(0);
-		}
-		cout << "Sorry, that was not a valid integer. Please try again\n> ";
-	}
-	// Clean out buffer again. Just in case.
-	cin.clear();
-	getline(cin, throwaway);
-	return answer;
-}
-
 // Get password from user
 string input_password(const char* msg) {
 	return string(getpass(msg));
