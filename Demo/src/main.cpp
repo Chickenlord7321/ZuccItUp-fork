@@ -151,20 +151,20 @@ int main() {
 	   } while (!svr.connect(oracle_username, oracle_password));
 	cout << "Credentials verified!\n";;
 
-	   svr.dropTable("orders"); //drops tables
-	   svr.dropTable("menu");
+	svr.dropTable("orders"); //drops tables
+	svr.dropTable("menu");
 
-	   svr.createTable("orders"); //Creates initial tables
-	   svr.createTable("menu");
+	svr.createTable("orders"); //Creates initial tables
+	svr.createTable("menu");
 
-	   svr.populateMenu();	//populates menu to have 3 options
+	svr.populateMenu();	//populates menu to have 3 options
 
-	   while(options() != 4){ //displays menu till user wants to quit
-		   options();
-	   }
+	while(options() != 4){ //displays menu till user wants to quit
+	}
 
-	   svr.dropTable("orders"); //drops tables
-	   svr.dropTable("menu");
+	svr.dropTable("orders"); //drops tables
+	svr.dropTable("menu");
+	return 0;
 }
 
 //prompts user for input and displays options
