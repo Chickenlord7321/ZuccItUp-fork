@@ -157,23 +157,21 @@ void Server::displayTable(const string& table_name) {
         Statement* stmt = conn->createStatement(sql);
         ResultSet* rs = stmt->executeQuery();
 
-        if (table_name == "orders") {
-            cout << "\n"
-                 << left
-                 << setw(20) << "Customer"
-                 << setw(30) << "Items"
-                 << setw(15) << "Destination"
-                 << string(90, '-') << "\n";
+           if (table_name == "orders") {
+              cout << "\n"
+                  << left
+                  << setw(20) << "Customer"
+                  << setw(30) << "Items"
+                  << setw(15) << "Destination"
+                  << string(65, '-') << "\n";
 
-            while (rs->next()) {
-                cout << left
+              while (rs->next()) {
+                 cout << left
                      << setw(20) << rs->getString(1)
-                     << setw(15) << rs->getString(2)
-                     << setw(30) << rs->getString(3)
-                     << setw(15) << rs->getString(4)
-                     << setw(10) << fixed << setprecision(2) << rs->getDouble(5)
+                     << setw(30) << rs->getString(2)
+                     << setw(15) << rs->getString(3)
                      << "\n";
-            }
+              }
 
         } else if (table_name == "menu") {
             cout << "\n"
