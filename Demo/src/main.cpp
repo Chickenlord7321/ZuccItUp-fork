@@ -10,17 +10,20 @@
 #include <unistd.h>		// for getpass()
 #include <ctype.h>		// for toupper() and tolower()
 #include <cstdlib>		// for exit()
+#include <limits.h>		// for INT_MIN and INT_MAX
 #include <iostream>
 #include <string>
 using namespace std;
-int options();
 
 // Global Server
 Server svr;
 
-/***************************
- * STRING HELPER FUNCTIONS *
- ***************************/
+// Declaration for main loop options
+int options();
+
+/*******************************
+ * USER INPUT HELPER FUNCTIONS *
+ *******************************/
 
 // Convert string to lowercase
 string to_lower(string s) {
@@ -53,6 +56,61 @@ string input_str(const string msg) {
 // Get password from user
 string input_password(const char* msg) {
 	return string(getpass(msg));
+}
+
+// Get double from user
+double input_double(const string msg, const double min, const double max) {
+	double answer = 0.0;
+	string throwaway;
+	cout << msg;
+
+	// cin has a flag that reads as false if the user input is not of the correct data type.
+	// We exploit that flag in this while loop. Credit to Prof. Bette Bultena for showing me 
+	// this trick in CSCI 159!
+	while (!(cin >> answer) || answer < min || answer > max) {
+		// Clear out the buffer
+		cin.clear();
+		getline(cin, throwaway);
+
+		// Quit if user types 'Q'
+		if (to_lower(throwaway) == "q") {
+			cout << "Goodbye!" << endl;
+			exit(0);
+		}
+		cout << "\nSorry, that was not a valid input. Please try again\n> ";
+	}
+	// Clean out buffer again. Just in case.
+	cin.clear();
+	getline(cin, throwaway);
+	return answer;
+}
+
+
+// Get int from user
+int input_int(const string msg, const int min = INT_MIN, const int max = INT_MAX) {
+	int answer;
+	string throwaway;
+	cout << msg;
+
+	// If the user does not input an integer, prompt them to try again.
+	// Or if the user enters an interger that's not between the min and max,
+	// prompt to try again.
+	while (!(cin >> answer) || answer < min || answer > max) {
+		// Clean out cin and the buffer.
+		cin.clear();
+		getline(cin, throwaway);
+
+		// Quit if user types 'Q'
+		if (to_lower(throwaway) == "q") {
+			cout << "Goodbye!" << endl;
+			exit(0);
+		}
+		cout << "Sorry, that was not a valid integer. Please try again\n> ";
+	}
+	// Clean out buffer again. Just in case.
+	cin.clear();
+	getline(cin, throwaway);
+	return answer;
 }
 
 
@@ -93,25 +151,24 @@ int main() {
 	   } while (!svr.connect(oracle_username, oracle_password));
 	cout << "Credentials verified!\n";;
 
-	   svr.dropTable("orders"); //drops tables
-	   svr.dropTable("menu");
+	svr.dropTable("orders"); //drops tables
+	svr.dropTable("menu");
 
-	   svr.createTable("orders"); //Creates initial tables
-	   svr.createTable("menu");
+	svr.createTable("orders"); //Creates initial tables
+	svr.createTable("menu");
 
-	   svr.populateMenu();//populates menu to have 3 options
+	svr.populateMenu();	//populates menu to have 3 options
 
-	   while(options() != 4){ //displays menu till user wants to quit
-		   options();
-	   }
+	while(options() != 4){ //displays menu till user wants to quit
+	}
 
-	   svr.dropTable("orders"); //drops tables
-	   svr.dropTable("menu");
+	svr.dropTable("orders"); //drops tables
+	svr.dropTable("menu");
+	return 0;
 }
 
 //prompts user for input and displays options
 int options (){
-	int arg = 0;
 	string name, item, location, arg_str;
 
 	cout << "Enter number to select option \n";
@@ -120,39 +177,29 @@ int options (){
 	cout << "3 Make orders\n";
 	cout << "4 Quit\n";
 
-	getline(cin, arg_str);
-	try {
-		arg = stoi(arg_str);
-	} catch (...) {
-		cout << "Invalid input. Please enter a number.\n";
-		return 0;
+	int arg = input_int("> ", 1, 4);
+
+	if (arg == 1) {
+		svr.displayTable("menu");
+	} else if (arg == 2) {
+		svr.displayTable("orders");
+	} else if (arg == 3) {
+		//insert order
+		name = input_str("Enter your name: ");
+
+		item = input_str("Enter item you wish to order (for multiple separate by comma): ");
+
+		location = input_str("Enter building number: ");
+
+		try {
+			svr.insertOrder(name, item, location);
+		} catch (const ServerException& e) {
+			cout << e << endl;
+		}
+	} else if (arg == 4) {
+		cout << " Closing...Goodbye\n";
+		return 4;
 	}
-
-	   if (arg == 1) {
-		   svr.displayTable("menu");
-	   } else if (arg == 2) {
-		   svr.displayTable("orders");
-	   } else if (arg == 3) {
-		   //insert order
-		   cout << "Enter your name\n";
-		   getline(cin, name);
-
-		   cout << "Enter item you wish to order (for multiple separate by comma)\n";
-		   getline(cin, item);
-
-		   cout << "Enter building\n";
-		   getline(cin, location);
-
-			try {
-    			svr.insertOrder(name, item, location);
-			} catch (const ServerException& e) {
-    			cout << e << endl;
-			}
-
-	   } else if (arg == 4) {
-		   cout << " Closing...Goodbye\n";
-		   return 4;
-	   }
 
 	return 0;
 }
