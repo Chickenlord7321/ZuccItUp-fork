@@ -110,7 +110,11 @@ void Server::createTable(const string& table_name) {
 //drops table specifed by table_name
 void Server::dropTable(const string& table_name){
 	try{
-		string sql = "DROP TABLE " + table_name;
+		string sql = "BEGIN "
+             "EXECUTE IMMEDIATE 'DROP TABLE " + table_name + "'; "
+             "EXCEPTION WHEN OTHERS THEN "
+             "IF SQLCODE != -942 THEN RAISE; END IF; "
+             "END;";
 
 		Statement* stmt = conn->createStatement(sql);
         stmt->executeUpdate();
