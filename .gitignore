@@ -16,3 +16,6 @@ venv.bak/
 
 # ignore MAC stuff
 .DS_store
+
+# ignore vscode stuff
+.vscode
