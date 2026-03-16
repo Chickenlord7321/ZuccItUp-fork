@@ -1,10 +1,13 @@
 # Authors: Caleb Bronn
 
-from typing import Type
-from enum import Enum
+from typing import Type	# supports using a class as an argument for a function
+from enum import Enum	# for enumerations
+
 
 class Cart:
 	def __init__(self, building: str, room: str):
+		# You can declare private attributes using double underscores (__)
+		# before the name of the variable
 		self.__building = building
 		self.__room = room
 		self.__subtotal = 0.0
@@ -18,6 +21,8 @@ class Cart:
 
 	# Getters
 	def get_location(self) -> tuple:
+		# Tuple data type in Python is an ordered, unchangeable array of data
+		# See: https://www.w3schools.com/python/python_tuples.asp
 		return self.__building, self.__room
 
 	def get_subtotal(self) -> float:
@@ -67,8 +72,8 @@ class Time(Enum):
 
 # Short enum class for order status:
 class Status(Enum):
-	# Some ideas:
-	# WAITING = "WAITING"		# for agent to accept the order
+	# Not quite sure how to do this, but here's some ideas:
+	# WAITING = "WAITING"	# waiting for agent to accept the order
 	# READY_FOR_PICKUP = "READY_FOR_PICKUP"
 	# IN_TRANSIT = "IN_TRANSIT"
 	# DELIVERED = "DELIVERED"
@@ -78,7 +83,13 @@ class Status(Enum):
 
 
 class Order:
-	def __init__(self, building: str, room: str, total: float, instructions: str, customer: str, vendor: str):
+	def __init__(self, building: str,
+				 room: str,
+				 total: float,
+				 instructions: str,
+				 customer: str,
+				 vendor: str
+				 ):
 		self.__building = building
 		self.__room = room
 		self.__total = total
