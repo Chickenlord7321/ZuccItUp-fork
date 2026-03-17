@@ -1,13 +1,27 @@
 from pymongo import MongoClient as MangoClient	# will this work?
 import getpass
 
-name = input("Enter monogoDB username \n")
-
+username = input("Enter you Mango username:\n> ")
 password = getpass.getpass("Enter your Mango password:\n> ")
-uri = f"mongodb://"+ name + ":{password}@studb-mongo.csci.viu.ca:27017/"+ name + "_project?authSource=admin"
+uri = f"mongodb://{username}:{password}@studb-mongo.csci.viu.ca:27017/{username}_project?authSource=admin"
 client = MangoClient(uri)
 
-db = client.get_database( name + "_project")  
+db = client.get_database(username + "_project")
+# menu = db.get_collection("menu")	# collection
+# order = db.get_collection("order")
+
+try:
+    db.drop_collection("menu")
+except:
+    pass
+try:
+    db.drop_collection("user")
+except:
+    pass
+try:
+    db.drop_collection("order")
+except:
+    pass
 
 db.create_collection("user", validator={ 
     "$jsonSchema": {
@@ -105,21 +119,19 @@ db.create_collection("menu", validator={
                             "bsonType": "string" }}}}}}}
 )
 
-db.create__collection("order", validator={
+db.create_collection("order", validator={
      "$jsonSchema": {  
         "bsonType": "object",
-        "required": [],
+        "required": ["building", "room"],
         "properties": {
             "building": {
                 "bsonType": "string",
-                "minimum": 100,
-                "maximum": 500
+                "pattern": "[1-4]\d\d"
             },
 
             "room": {
                 "bsonType": "string",
-                "minimum": 0,
-                "maximum": 500
+                "pattern": "[1-5]\d\d\w?"
             },
 
             "specialInstructions": {
@@ -187,4 +199,5 @@ db.create__collection("order", validator={
                         "qty": {
                             "bsonType": "int" }}}}}}}
 )
+
 client.close()
