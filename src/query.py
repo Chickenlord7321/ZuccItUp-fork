@@ -1,11 +1,10 @@
 #This document will contain all the queries to be used by the application
 
 #Displays menu types and location and items
-def display_menu_type():
+def display_menu_type(menu_type,location):
     
-    menu_type = input("Enter the menu type (or press Enter to skip): ").strip()
-    location = input("Enter location of menu (or press Enter to skip): ").strip()
-    
+    #menu_type = input("Enter the menu type (or press Enter to skip): ").strip()
+    #location = input("Enter location of menu (or press Enter to skip): ").strip()
     
     query = {}
     
