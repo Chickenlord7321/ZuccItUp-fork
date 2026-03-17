@@ -228,3 +228,6 @@ db.create_collection("order", validator={
 )
 
 client.close()
+
+print("Collections added:")
+print("- Menu\n- Order\n- User")
