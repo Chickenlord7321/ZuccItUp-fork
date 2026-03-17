@@ -1,13 +1,25 @@
 from pymongo import MongoClient as MangoClient	# will this work?
 import getpass
 
-name = input("Enter monogoDB username \n")
-
+username = input("Enter you Mango username:\n> ")
 password = getpass.getpass("Enter your Mango password:\n> ")
-uri = f"mongodb://"+ name + ":{password}@studb-mongo.csci.viu.ca:27017/"+ name + "_project?authSource=admin"
+uri = f"mongodb://{username}:{password}@studb-mongo.csci.viu.ca:27017/{username}_project?authSource=admin"
 client = MangoClient(uri)
 
-db = client.get_database( name + "_project")  
+db = client.get_database(username + "_project")
+
+try:
+    db.drop_collection("menu")
+except:
+    pass
+try:
+    db.drop_collection("user")
+except:
+    pass
+try:
+    db.drop_collection("order")
+except:
+    pass
 
 db.create_collection("user", validator={ 
     "$jsonSchema": {
@@ -35,7 +47,7 @@ db.create_collection("user", validator={
                 "enum": ["agent", "customer", "vendor"]  
             },
 
-            "availibilityStatus": {
+            "availabilityStatus": {
                 "bsonType": "bool"
             },
 
@@ -54,13 +66,27 @@ db.create_collection("user", validator={
             "schedule": {
                 "bsonType": "array",
                 "items": {
-                    "bsonType": "string" }}}}}
+                    "bsonType": "object",
+                    "properties": {
+                        "day": {
+                            "bsonType": "string",
+                            "enum": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+                        },
+                        "startTime": {
+                            "bsonType": "date"
+                        },
+                        "endTime": {
+                            "bsonType": "date"
+                        },
+                    }
+                },
+            }}}}
 )
 
 db.create_collection("menu", validator={ 
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["type", "publishStatus"],
+        "required": ["type"],
         "properties": {
             "type": {
                 "bsonType": "string",
@@ -70,13 +96,25 @@ db.create_collection("menu", validator={
             "schedule": {
                 "bsonType": "array",
                 "items": {
-                    "bsonType": "string"
-                }
+                    "bsonType": "object",
+                    "properties": {
+                        "day": {
+                            "bsonType": "string",
+                            "enum": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+                        },
+                        "startTime": {
+                            "bsonType": "date"
+                        },
+                        "endTime": {
+                            "bsonType": "date"
+                        },
+                    }
+                },
             },
 
-            "publishStatus": {
-                "bsonType": "bool"
-            },
+            # "publishStatus": {
+            #     "bsonType": "bool"
+            # },
 
             "menuItem": {
                 "bsonType": "array",
@@ -108,18 +146,16 @@ db.create_collection("menu", validator={
 db.create_collection("order", validator={
      "$jsonSchema": {  
         "bsonType": "object",
-        "required": [],
+        "required": ["building", "room"],
         "properties": {
             "building": {
                 "bsonType": "string",
-                "minimum": 100,
-                "maximum": 500
+                "pattern": "[1-4]\d\d"
             },
 
             "room": {
                 "bsonType": "string",
-                "minimum": 0,
-                "maximum": 500
+                "pattern": "[1-5]\d\d\w?"
             },
 
             "specialInstructions": {
@@ -132,7 +168,8 @@ db.create_collection("order", validator={
             },
 
             "orderStatus": {
-                "bsonType": "string"
+                "bsonType": "string",
+                "enum": ["pending", "ready_for_pickup", "in_transit", "delivered", "received"]
             },
 
             "orderTime": {  
@@ -181,10 +218,13 @@ db.create_collection("order", validator={
                     "bsonType": "object",
                     "properties": {
                         "name": {
-                            "bsonType": "string"
+                            "bsonType": "string",
                         },
 
                         "qty": {
-                            "bsonType": "int" }}}}}}}
+                            "bsonType": "int",
+                            "minimum": 0,
+                        }}}}}}}
 )
+
 client.close()
