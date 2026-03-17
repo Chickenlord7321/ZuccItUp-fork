@@ -2,11 +2,13 @@ from datetime import datetime
 from pymongo import MongoClient as MangoClient	# will this work?
 import getpass
 
+name = input("Enter monogoDB username \n")
+
 password = getpass.getpass("Enter your Mango password:\n> ")
-uri = f"mongodb://bronnc:{password}@studb-mongo.csci.viu.ca:27017/bronnc_project?authSource=admin"
+uri = f"mongodb://" + name + ":{password}@studb-mongo.csci.viu.ca:27017/" + name + "_project?authSource=admin"
 client = MangoClient(uri)
 
-db = client.get_database("bronnc_project")
+db = client.get_database(name + "_project")
 menu = db.get_collection("menu")	# collection
 order = db.get_collection("order")  
 
