@@ -7,6 +7,8 @@ def display_menu_type():
     menu_type = input("Enter the menu type (or press Enter to skip): ").strip()
     location = input("Enter location of menu (or press Enter to skip): ").strip()
     
+    #menu_type = input("Enter the menu type (or press Enter to skip): ").strip()
+    #location = input("Enter location of menu (or press Enter to skip): ").strip()
     
     query = {}
     
