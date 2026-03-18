@@ -46,7 +46,7 @@ class Menu():
  
 
 
-        keyword = input("Search keyword (leave blank for all): ").strip() //Input search term
+        keyword = input("Search keyword (leave blank for all): ").strip() #//Input search term
         query = {"Type": True} #checking if the menu type is there
         if keyword:
             #query["name"] = {"$regex": keyword} #search for the menu type query=menu
