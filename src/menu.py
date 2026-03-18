@@ -44,6 +44,23 @@ class Menu():
                 f"{item.get('description', '')}"
             )
  
+
+
+        keyword = input("Search keyword (leave blank for all): ").strip() //Input search term
+        query = {"Type": True} #checking if the menu type is there
+        if keyword:
+            #query["name"] = {"$regex": keyword} #search for the menu type query=menu
+            items = list(db.items.find(query)) #gives the list of menu items
+        if not items:
+            print("No items found.")
+            return
+        print(f"\n{'#':<4} {'Name':<15} {'Price':>8}  Description") #printing the menu?
+        print("─" * 55) #spacing
+        for i, item in enumerate(items, 1): 
+            print(f"{i:<4} {item['name']:<15} ${item['price']:>7.2f}  {item['description']}")
+            #//looping through the list of menuitems
+        
+
     def viewAllMenus(self):
 
         pass
