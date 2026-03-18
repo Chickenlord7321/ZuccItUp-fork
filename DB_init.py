@@ -2,7 +2,7 @@ from datetime import datetime
 from pymongo import MongoClient as MangoClient	# will this work?
 import getpass
 
-name = input("Enter monogoDB username \n")
+name = input("Enter mongoDB username \n")
 
 password = getpass.getpass("Enter your Mango password:\n> ")
 uri = f"mongodb://" + name + ":{password}@studb-mongo.csci.viu.ca:27017/" + name + "_project?authSource=admin"
@@ -11,6 +11,7 @@ client = MangoClient(uri)
 db = client.get_database(name + "_project")
 menu = db.get_collection("menu")	# collection
 order = db.get_collection("order")  
+user = db.get_collection("user")
 
 # Lower Cafe - Breakfast Menu (7:30am - 10:30am)
 menu.insert_one({
@@ -1279,8 +1280,6 @@ menu.insert_one({
     ]
 })
 
-
-
 # Unleashed Hot Dogs - All Day Menu
 menu.insert_one({
     "type": "General",
@@ -1480,7 +1479,7 @@ order.insert_one({
     "building": "210",
     "room": "115",
     "subTotal": 13.50, 
-    "orderStatus": "Complete",
+    "orderStatus": "Received",
     "orderTime": 1100,           #  Integer format: HHMM (11:00 AM)
     "readyTime": 1107,           #  11:07 AM
     "acceptTime": 1107,          #  11:07 AM
@@ -1499,4 +1498,186 @@ order.insert_one({
         }
     ]
 })
+
+
+document_list = [
+    {
+     {
+        "name": "Kyle",
+        "email": "losermgee@viu.ca",
+        "role": "customer",
+        "VIUID": "123456789",
+        "previouslyOrdered": [
+            "Chicken Strips", "Coffee", "Monster", "Hot Dog"
+        ]
+    },
+    {
+        "name": "Surya",
+        "email": "suryaB@gmail.com",
+        "role": "customer",
+        "VIUID": "128529353",
+        "previouslyOrdered": [
+            "Chocolate Chip Muffin", "The New Yorker", "Monster", "The Hawaiian", "Plain Bagel", "Diet Coke"
+        ]
+    },
+    {
+        "name": "Bruce",
+        "email": "bigBruce@viu.ca",
+        "role": "customer",
+        "VIUID": "752973458",
+        "previouslyOrdered": [
+            "Chicken Strips", "Tea", "Monster", "Danish"
+        ]
+    },
+    {
+        "name": "Emily Chen",
+        "email": "emily.chen@viu.ca",
+        "role": "customer",
+        "VIUID": "456789123",
+        "previouslyOrdered": [
+            "Caesar Salad", "Latte", "Blueberry Muffin", "Greek Salad"
+        ]
+    },
+    {
+        "name": "Marcus Johnson",
+        "email": "mjohnson@gmail.com",
+        "role": "customer",
+        "VIUID": "789123456",
+        "previouslyOrdered": [
+            "Pepperoni Pizza", "Coke", "Chicken Wings"
+        ]
+    },
+    {
+        "name": "Sarah Martinez",
+        "email": "sarah.m@viu.ca",
+        "role": "customer",
+        "VIUID": "321654987",
+        "previouslyOrdered": [
+            "Veggie Burger", "Iced Tea", "Fresh Fruit Cup", "Yogurt Parfait"
+        ]
+    },
+    {
+        "name": "David Lee",
+        "email": "david.lee88@gmail.com",
+        "role": "customer",
+        "VIUID": "987654321",
+        "previouslyOrdered": [
+            "BLT", "Coffee", "Chocolate Chip Cookie"
+        ]
+    },
+    {
+        "name": "Priya Patel",
+        "email": "priya.patel@viu.ca",
+        "role": "customer",
+        "VIUID": "147258369",
+        "previouslyOrdered": [
+            "Falafel Wrap", "Smoothie", "Granola Bar", "Banana Bread"
+        ]
+    },
+    {
+        "name": "Alex Thompson",
+        "email": "athompson@gmail.com",
+        "role": "customer",
+        "VIUID": "258369147",
+        "previouslyOrdered": []  # New customer, no previous orders
+    },
+    {
+        "name": "Jessica Wang",
+        "email": "jwang@viu.ca",
+        "role": "customer",
+        "VIUID": "369147258",
+        "previouslyOrdered": [
+            "Sushi Roll", "Green Tea", "Miso Soup", "Edamame"
+        ]
+    },
+    
+    # ============= AGENTS =============
+    {
+        "name": "Mike Stevens",
+        "email": "mike.stevens@viu.ca",
+        "role": "agent",
+        "VIUID": "111222333",
+        "availabilityStatus": True,  # Currently available
+        "previouslyOrdered": []
+    },
+    {
+        "name": "Jennifer Lopez",
+        "email": "jlopez.agent@viu.ca",
+        "role": "agent",
+        "VIUID": "222333444",
+        "availabilityStatus": True,
+        "previouslyOrdered": ["Coffee"]
+    },
+    {
+        "name": "Robert Kim",
+        "email": "rkim.delivery@viu.ca",
+        "role": "agent",
+        "VIUID": "333444555",
+        "availabilityStatus": False,  # Currently not available
+        "previouslyOrdered": []
+    },
+    {
+        "name": "Amanda Wilson",
+        "email": "awilson.agent@viu.ca",
+        "role": "agent",
+        "VIUID": "444555666",
+        "availabilityStatus": True,
+        "previouslyOrdered": ["Breakfast Burrito", "Coffee"]
+    },
+    {
+        "name": "Carlos Rodriguez",
+        "email": "carlos.r@viu.ca",
+        "role": "agent",
+        "VIUID": "555666777",
+        "availabilityStatus": True,
+        "previouslyOrdered": ["Pizza", "Monster"]
+    },
+    {
+        "name": "Lisa Zhang",
+        "email": "lzhang.delivery@viu.ca",
+        "role": "agent",
+        "VIUID": "666777888",
+        "availabilityStatus": False,
+        "previouslyOrdered": []
+    },
+    {
+        "name": "Upper Cafe",
+        "email": "uppercafe@viu.ca",
+        "role": "vendor",
+        "VIUID": "8765437898",
+        "location": "Building 300",
+        "hoursOfOperation": {
+            "days": "Mon-Fri",
+            "startTime": "07:30",
+        "endTime": "16:00"
+        }
+    },
+    {
+        "name": "Lower Cafe",
+        "email": "lowercafe@viu.ca",
+        "role": "vendor",
+        "VIUID": "8765437998",
+        "location": "Building 185",
+        "hoursOfOperation": {
+            "days": "Mon-Fri",
+            "startTime": "07:30",
+            "endTime": "14:00"
+        }
+    },
+    {
+        "name": "Unleashed Dogs",
+        "email": "unleaseddogs@dog.ca",
+        "role": "vendor",
+        "VIUID": "111111111",
+        "location": "Royal Bank Plaza",
+        "hoursOfOperation": {
+            "days": "Tue-Thu",
+            "startTime": "10:00",
+            "endTime": "14:00"
+        }
+    }    
+    }]
+
+user.insertMany([document_list])
+
 client.close()
