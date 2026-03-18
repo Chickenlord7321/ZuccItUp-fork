@@ -61,7 +61,7 @@ class Cart:
 
 # Short enum class for order times:
 class Time(Enum):
-	PLACED = "PLACED"
+	ORDER = "ORDER"
 	READY = "READY"
 	ACCEPT = "ACCEPT"
 	PICKUP = "PICKUP"
@@ -83,16 +83,10 @@ class Status(Enum):
 
 
 class Order:
-	def __init__(self, building: str,
-				 room: str,
-				 total: float,
-				 instructions: str,
-				 customer: str,
-				 vendor: str
-				 ):
+	def __init__(self, building: str, room: str, total: float, instructions: str, customer: str, vendor: str):
 		self.__building = building
 		self.__room = room
-		self.__total = total
+		self.__subtotal = total
 		self.__special_instructions = instructions
 		self.__customer = customer
 		self.__vendor = vendor
@@ -110,8 +104,8 @@ class Order:
 	def get_location(self) -> tuple:
 		return self.__building, self.__room
 
-	def get_total(self) -> float:
-		return self.__total
+	def get_subtotal(self) -> float:
+		return self.__subtotal
 
 	def get_instructions(self) -> str:
 		return self.__special_instructions

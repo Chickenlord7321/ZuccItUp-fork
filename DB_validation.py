@@ -63,23 +63,24 @@ db.create_collection("user", validator={
                 "bsonType": "string"
             },
 
-            "schedule": {
-                "bsonType": "array",
-                "items": {
-                    "bsonType": "object",
-                    "properties": {
-                        "day": {
-                            "bsonType": "string",
-                            "enum": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-                        },
-                        "startTime": {
-                            "bsonType": "date"
-                        },
-                        "endTime": {
-                            "bsonType": "date"
-                        },
-                    }
-                },
+            "hoursOfOperation": {
+                "bsonType": "object",
+                "properties": {
+                    "days": {
+                        "bsonType": "string",
+                        "pattern": "\w\w\w-\w\w\w",     # Must be in 3-letter format like this: Mon-Fri
+                    },
+                    "startTime": {
+                        "bsonType": "string",
+                        # Must be in 24-hour time with leading zeros, e.g. 23:59 or 07:30
+                        "pattern": "([0-1][0-9]|2[0-3]):[0-5][0-9]",
+                    },
+                    "endTime": {
+                        "bsonType": "string",
+                        # Must be in 24-hour time with leading zeros, e.g. 23:59 or 07:30
+                        "pattern": "([0-1][0-9]|2[0-3]):[0-5][0-9]",
+                    },
+                }
             }}}}
 )
 
@@ -90,26 +91,27 @@ db.create_collection("menu", validator={
         "properties": {
             "type": {
                 "bsonType": "string",
-                "enum": ["Breakfast", "Lunch", "Dinner", "General"]
+                "enum": ["breakfast", "lunch", "dinner", "general"]
             },
 
             "schedule": {
-                "bsonType": "array",
-                "items": {
-                    "bsonType": "object",
-                    "properties": {
-                        "day": {
-                            "bsonType": "string",
-                            "enum": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-                        },
-                        "startTime": {
-                            "bsonType": "date"
-                        },
-                        "endTime": {
-                            "bsonType": "date"
-                        },
-                    }
-                },
+                "bsonType": "object",
+                "properties": {
+                    "days": {
+                        "bsonType": "string",
+                        "pattern": "\w\w\w-\w\w\w",     # Must be in format like this: Mon-Fri
+                    },
+                    "startTime": {
+                        "bsonType": "string",
+                        # Must be in 24-hour time with leading zeros, e.g. 23:59 or 07:30
+                        "pattern": "([0-1][0-9]|2[0-3]):[0-5][0-9]",
+                    },
+                    "endTime": {
+                        "bsonType": "string",
+                        # Must be in 24-hour time with leading zeros, e.g. 23:59 or 07:30
+                        "pattern": "([0-1][0-9]|2[0-3]):[0-5][0-9]",
+                    },
+                }
             },
 
             # "publishStatus": {
@@ -169,10 +171,10 @@ db.create_collection("order", validator={
 
             "orderStatus": {
                 "bsonType": "string",
-                "enum": ["pending", "ready_for_pickup", "in_transit", "delivered", "received"]
+                "enum": ["pending", "readyForPickup", "inTransit", "delivered", "received"]
             },
 
-            "orderTime": {  
+            "orderTime": {
                 "bsonType": "date",
                 "description": "must be a valid ISO Date object"
             },
@@ -228,3 +230,6 @@ db.create_collection("order", validator={
 )
 
 client.close()
+
+print("Collections added:")
+print("- Menu\n- Order\n- User")
