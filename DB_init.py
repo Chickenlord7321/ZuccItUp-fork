@@ -1512,24 +1512,6 @@ document_list = [
         ]
     },
     {
-        "name": "Surya",
-        "email": "suryaB@gmail.com",
-        "role": "customer",
-        "VIUID": "128529353",
-        "previouslyOrdered": [
-            "Chocolate Chip Muffin", "The New Yorker", "Monster", "The Hawaiian", "Plain Bagel", "Diet Coke"
-        ]
-    },
-    {
-        "name": "Bruce",
-        "email": "bigBruce@viu.ca",
-        "role": "customer",
-        "VIUID": "752973458",
-        "previouslyOrdered": [
-            "Chicken Strips", "Tea", "Monster", "Danish"
-        ]
-    },
-    {
         "name": "Emily Chen",
         "email": "emily.chen@viu.ca",
         "role": "customer",
@@ -1639,43 +1621,7 @@ document_list = [
         "VIUID": "666777888",
         "availabilityStatus": False,
         "previouslyOrdered": []
-    },
-    {
-        "name": "Upper Cafe",
-        "email": "uppercafe@viu.ca",
-        "role": "vendor",
-        "VIUID": "8765437898",
-        "location": "Building 300",
-        "hoursOfOperation": {
-            "days": "Mon-Fri",
-            "startTime": "07:30",
-        "endTime": "16:00"
-        }
-    },
-    {
-        "name": "Lower Cafe",
-        "email": "lowercafe@viu.ca",
-        "role": "vendor",
-        "VIUID": "8765437998",
-        "location": "Building 185",
-        "hoursOfOperation": {
-            "days": "Mon-Fri",
-            "startTime": "07:30",
-            "endTime": "14:00"
-        }
-    },
-    {
-        "name": "Unleashed Dogs",
-        "email": "unleaseddogs@dog.ca",
-        "role": "vendor",
-        "VIUID": "111111111",
-        "location": "Royal Bank Plaza",
-        "hoursOfOperation": {
-            "days": "Tue-Thu",
-            "startTime": "10:00",
-            "endTime": "14:00"
-        }
-    }    
+    }
     }]
 
 user.insertMany([document_list])

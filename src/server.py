@@ -22,7 +22,6 @@ def view_user(viu_ID):
 
 #menu functions 
 def get_vendors():
-
     return
 
 def get_all_menu(vendorID):
