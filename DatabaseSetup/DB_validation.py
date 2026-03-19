@@ -45,7 +45,7 @@ db.create_collection("user", validator={
             # REQUIRED for all user types
             "role": {
                 "bsonType": "string",
-                "enum": ["agent", "customer", "vendor"]  
+                "enum": ["Agent", "Customer", "Vendor"]
             },
             # Only used by Delivery Agent
             "availabilityStatus": {
@@ -92,7 +92,12 @@ db.create_collection("menu", validator={
         "properties": {
             "type": {
                 "bsonType": "string",
-                "enum": ["breakfast", "lunch", "dinner", "general"]
+                "enum": ["Breakfast", "Lunch", "Dinner", "General"]
+            },
+
+            "vendor": {
+                "bsonType": "string",   # Name of vendor
+                "enum": ["Unleashed Hot Dogs", "Upper Cafeteria", "Lower Cafeteria"],
             },
 
             "schedule": {
@@ -100,7 +105,7 @@ db.create_collection("menu", validator={
                 "properties": {
                     "days": {
                         "bsonType": "string",
-                        "pattern": "\\w\\w\\w-\\w\\w\\w",     # Must be in format like this: Mon-Fri
+                        "pattern": "\\w\\w\\w-\\w\\w\\w",   # Must be in format like this: Mon-Fri
                     },
                     "startTime": {
                         "bsonType": "string",
