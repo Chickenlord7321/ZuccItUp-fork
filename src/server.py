@@ -12,7 +12,7 @@ def create_user(email,name,viu_ID,role):
     return
 
 def deactivate_user(viu_ID):
-
+    
     return
 
 def view_user(viu_ID):
