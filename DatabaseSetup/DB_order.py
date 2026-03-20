@@ -1,6 +1,17 @@
 from datetime import datetime
 
 def insert_all_orders(order):
+	# Clear database to avoid duplicates
+	# I'm using the deliveryTime to identify the two orders because it seems unique enough,
+	# and I'm too lazy to give them IDs.
+	filter_orders = {
+		"deliveryTime": {
+			"$in": [datetime(2026, 2, 27, 11, 15, 0),
+					datetime(2026, 3, 19, 12, 15, 0)]
+		}
+	}
+	order.delete_many(filter_orders)
+
 	order.insert_one({
 		"building": "210",
 		"room": "115",
@@ -64,15 +75,6 @@ if __name__ == "__main__":
 
 	db = client.get_database(f"{username}_project")
 	order = db.get_collection("order")
-
-	# Clear database to avoid duplicates
-	filter_orders = {
-		"deliveryTime": {
-			"$in": [datetime(2026, 2, 27, 11, 15, 0),
-					datetime(2026, 3, 19, 12, 15, 0)]
-		}
-	}
-	order.delete_many(filter_orders)
 
 	insert_all_orders(order)
 	client.close()

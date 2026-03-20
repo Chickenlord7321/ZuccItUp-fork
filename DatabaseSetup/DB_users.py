@@ -1,4 +1,17 @@
 def insert_all_users(user):
+	# Clear database to avoid duplicates
+	filter_users = {
+		"name": {
+			"$in": ["Lower Cafeteria", "Upper Cafeteria", "Unleashed Hot Dogs",  # Vendors
+					"Dr. Sarah Elizabeth Carruthers", "Caleb Bronn", "Keenan Wolfe",  # Customers
+					"Emily Chen", "Marcus Johnson", "Sarah Martinez", "David Lee",
+					"Priya Patel", "Alex Thompson", "Jessica Wang",
+					"Bruce Fernandes", "Surya Balram", "Mike Stevens", "Jennifer Lopez",  # Agents
+					"Robert Kim", "Amanda Wilson", "Carlos Rodriguez", "Lisa Zhang"]
+		}
+	}
+	user.delete_many(filter_users)
+
 	# Vendors
 	lower_caf = {
 		"name": "Lower Cafeteria",
@@ -231,19 +244,6 @@ if __name__ == "__main__":
 
 	db = client.get_database(f"{username}_project")
 	user = db.get_collection("user")
-
-	# Clear database to avoid duplicates
-	filter_users = {
-		"name": {
-			"$in": ["Lower Cafeteria", "Upper Cafeteria", "Unleashed Hot Dogs",			# Vendors
-					"Dr. Sarah Elizabeth Carruthers", "Caleb Bronn", "Keenan Wolfe",	# Customers
-					"Emily Chen", "Marcus Johnson", "Sarah Martinez", "David Lee",
-					"Priya Patel", "Alex Thompson", "Jessica Wang",
-					"Bruce Fernandes", "Surya Balram", "Mike Stevens", "Jennifer Lopez", # Agents
-					"Robert Kim", "Amanda Wilson", "Carlos Rodriguez", "Lisa Zhang"]
-		}
-	}
-	user.delete_many(filter_users)
 
 	insert_all_users(user)
 	client.close()

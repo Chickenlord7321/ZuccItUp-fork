@@ -1,4 +1,7 @@
 def insert_all_menus(menu):
+	# Clear the menu collection so we don't insert duplicates
+	menu.delete_many({})
+
 	# Lower Cafe - Breakfast Menu (7:30am - 10:30am)
 	menu.insert_one({
 		"type": "Breakfast",
@@ -1480,9 +1483,6 @@ if __name__ == "__main__":
 
 	db = client.get_database(f"{username}_project")
 	menu = db.get_collection("menu")  # collection
-
-	# Clear the menu collection so we don't insert duplicates
-	menu.delete_many({})
 
 	insert_all_menus(menu)
 	client.close()
