@@ -1465,7 +1465,7 @@ def insert_all_menus(menu):
 			}
 		]
 	})
-	print("Menus inserted")
+	print("Menus inserted into the database")
 # end insert_all_menus
 
 # Prompt user for username and password only if they run this file as a script (not as a module).
