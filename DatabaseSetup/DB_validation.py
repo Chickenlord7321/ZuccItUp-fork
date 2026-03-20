@@ -1,12 +1,12 @@
 from pymongo import MongoClient as MangoClient	# will this work?
 import getpass
 
-username = input("Enter you Mango username:\n> ")
-password = getpass.getpass("Enter your Mango password:\n> ")
+username = input("Enter you Mango username: ")
+password = getpass.getpass("Enter your Mango password: ")
 uri = f"mongodb://{username}:{password}@studb-mongo.csci.viu.ca:27017/{username}_project?authSource=admin"
 client = MangoClient(uri)
 
-db = client.get_database(username + "_project")
+db = client.get_database(f"{username}_project")
 
 try:
     db.drop_collection("menu")
@@ -24,51 +24,52 @@ except:
 db.create_collection("user", validator={ 
     "$jsonSchema": {
         "bsonType": "object",
-        "required": ["name", "email", "role", "VIUID"],
+        "required": ["name", "email", "VIUID", "role"],
         "properties": {
+            # REQUIRED for all user types
             "name": {
                 "bsonType": "string"
             },
-
+            # REQUIRED for all user types
             "email": {
                 "bsonType": "string",
-                "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
             },
-
+            # REQUIRED for all user types
             "VIUID": {
                 "bsonType": "string",  
                 "minLength": 9,
                 "maxLength": 9,
-                "pattern": "^[0-9]{9}$"
+                "pattern": "[0-9]{9}"
             },
-
+            # REQUIRED for all user types
             "role": {
                 "bsonType": "string",
-                "enum": ["agent", "customer", "vendor"]  
+                "enum": ["Agent", "Customer", "Vendor"]
             },
-
+            # Only used by Delivery Agent
             "availabilityStatus": {
                 "bsonType": "bool"
             },
-
+            # Only used by Customer
             "previouslyOrdered": {
                 "bsonType": "array",
                 "items": {
                     "bsonType": "string"
                 },
-                "maxItems": 100
+                "maxItems": 10
             },
-
+            # Only used by Vendor
             "location": {
                 "bsonType": "string"
             },
-
+            # Only used by Vendor
             "hoursOfOperation": {
                 "bsonType": "object",
                 "properties": {
                     "days": {
                         "bsonType": "string",
-                        "pattern": "\w\w\w-\w\w\w",     # Must be in 3-letter format like this: Mon-Fri
+                        "pattern": "\\w\\w\\w-\\w\\w\\w",     # Must be in 3-letter format like this: Mon-Fri
                     },
                     "startTime": {
                         "bsonType": "string",
@@ -91,7 +92,12 @@ db.create_collection("menu", validator={
         "properties": {
             "type": {
                 "bsonType": "string",
-                "enum": ["breakfast", "lunch", "dinner", "general"]
+                "enum": ["Breakfast", "Lunch", "Dinner", "General"]
+            },
+
+            "vendor": {
+                "bsonType": "string",   # Name of vendor
+                "enum": ["Unleashed Hot Dogs", "Upper Cafeteria", "Lower Cafeteria"],
             },
 
             "schedule": {
@@ -99,7 +105,7 @@ db.create_collection("menu", validator={
                 "properties": {
                     "days": {
                         "bsonType": "string",
-                        "pattern": "\w\w\w-\w\w\w",     # Must be in format like this: Mon-Fri
+                        "pattern": "\\w\\w\\w-\\w\\w\\w",   # Must be in format like this: Mon-Fri
                     },
                     "startTime": {
                         "bsonType": "string",
@@ -114,6 +120,7 @@ db.create_collection("menu", validator={
                 }
             },
 
+            # No longer necessary since we're not implementing the Vendor
             # "publishStatus": {
             #     "bsonType": "bool"
             # },
@@ -152,12 +159,12 @@ db.create_collection("order", validator={
         "properties": {
             "building": {
                 "bsonType": "string",
-                "pattern": "[1-4]\d\d"
+                "pattern": "[1-4]\\d\\d"
             },
 
             "room": {
                 "bsonType": "string",
-                "pattern": "[1-5]\d\d\w?"
+                "pattern": "[1-5]\\d\\d\\w?"
             },
 
             "specialInstructions": {
