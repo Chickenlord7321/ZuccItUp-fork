@@ -1,4 +1,8 @@
 # Authors: Caleb, Keenan
+from datetime import datetime
+from bson.objectid import ObjectId
+
+#See code plan in A6 document for details on each function
 
 from pymongo import MongoClient as MangoClient
 
@@ -34,83 +38,227 @@ class Server:
 	# Must call this to disconnect from the server
 	def disconnect(self):
 		self.__client.close()
+    exists = False
+
+    result = user.find_one({
+        "VIUID": viu_ID
+    })
+
+    if result:
+        exists = True
+        return exists
+    
+    return exists
+    
+
+def create_user(email,name,viu_ID,role,availability_Status=None):
+
+    if role == "agent":
+        agent_doc = {
+            "name": name,
+            "email": email,
+            "VIUID": viu_ID,
+            "role": role,
+            "availabilityStatus": availability_Status                  # defining the agent to be added to the db with the required details
+        }
+        result = user.insert_one(agent_doc)
+    
+    if role == "customer":
+        customer_doc = {
+            "name": name,
+            "email": email,
+            "VIUID": viu_ID,
+            "role": role,
+            "previouslyOrdered":[]
+        }
+        result = user.insert_one(customer_doc)
+
+    return result
+
+def deactivate_user(viu_ID):
+    result = user.update({"VIUID":viu_ID},{"$set": {"active":False}})
+    return result
 
 	#See code plan in A6 document for details on each function
 
-	#user functions
-	def verify_user(self, viu_ID):
+    result = user.find_one({"VIUID": viu_ID})
 
-		is_valid = False
-
-		return is_valid
-
-	def create_user(eself, mail, name, viu_ID, role):
-
-		return
-
-	def deactivate_user(self, viu_ID):
-
-		return
-
-	def view_user(self, viu_ID):
-
-		return
+    return result
 
 
-	#menu functions
-	def get_vendors(self):
+def view_all_user(role):
 
-		return
+    result = user.find({"role": role})
 
-	def get_all_menu(self, vendor_ID):
+    return result 
 
-		return
 
-	def get_one_menu(self, menu_ID):
+#menu functions 
 
-		return
+#gets all vendor names
+def get_vendors():
+    result = menu.distinct("vendor")
 
-	def get_menu_item(self, menu_item_ID):
+    """ for vendor in result
+        print(f" - {vendor}")   #print example for distinct vendors that have menus 
+    """
+    return result
 
-		return
+# whichever param is filled will change the query,
+# if vendorID=upper cafe it will display upper cafe menus
+# if menuItem = coffee it will find menu with coffee
+# null of all should return all menus
+def get_all_menu(vendorID=None,menuItem=None,type=None):
+    query = {}
 
-	#order functions
-	def create_order(self, building,room,subtotal,instructions,customer,vendor,cart):
+    if vendorID:
+        query["vendor"] = vendorID
 
-		return
+    if menuItem:
+        query["menuItem"] = menuItem
 
-	def get_order(self, order_ID):
+    if type:
+        query["type"] = type
 
-		return
+    result = menu.find(query)
 
-	def get_order_by_user(self, user_ID):
+    #menu_list = list(result)
+    #not sure to return list, dictionary or result 
+    return result 
 
-		return
+#by type and/or by vendor
+# both params are used it will display the menu with both conditions
+# works with only one param but will still only display one menu
+def get_one_menu(vendorID=None,type=None):
+    query = {}
 
-	def add_agent_to_order(self, agent_ID, order_ID):
+    if vendorID:
+        query["vendor"] = vendorID
 
-		return
+    if type:
+        query["type"] = type
 
-	def update_orderTime(self, time, order_ID):
+    result = menu.find_one(query)
 
-		return
+    return result
 
-	def update_readyTime(self, time,order_ID):
+#used by view Item or view all items
+# with param means display one menu item
+# with param = null display all menus
+def get_menu_item(menuItemID=None):
 
-		return
+    if menuItemID:
+        result = db.menu.aggregate([                    #runs aggregation pipeline against menu collection and converts it into a list
+            {"$unwind": "$menuItem"},                        #unwinding the array of menuItem to separate menus
+            {"$match": {"menuItem.name": {"$regex": menuItemID, "$options": "i"}}}, #filters to where only the matching item remains
+            {"$project": {                                   #selects only the fields required and deletes the rest
+                "name": "$menuItem.name",
+                "price": "$menuItem.price",
+                "description": "$menuItem.description",
+                "inStock": "$menuItem.inStock",
+                "allergens": "$menuItem.allergens",          #from "name" till this line, pulls fields from the unwound menuItem and allows acess as just item["name"]
+                "location": "$location",
+                "menuType": "$type",                         #these two lines pull fields from the menu document to find location and menuType the item belongs
+            }},
+            {"$limit": 1}                                   
+        ])
+        return result
+    
+    result = menu.aggregate([                     #runs the aggregation pipeline on the menu collection and converts it to the python list
+            {"$unwind": "$menuItem"},                        #unwinding the array of menuItem to separate menus
+            {"$project": {                                   #selects the fields we want to output
+                "name": "$menuItem.name",                    
+                "price": "$menuItem.price",
+                "description": "$menuItem.description",
+                "inStock": "$menuItem.inStock",              #pulls the four fields from the unwound menuItem in the form item["name"], item["price"] and such
+                "location": "$location",
+                "menuType": "$type",                         #pulling these two fields from the menu document to find the location and menuType for each item
+            }},
+            {"$sort": {"location": 1, "menuType": 1, "name": 1}} #sorts the results by location, then menuType and then name alphabetically, grouping the output logically by place, type and such
+        ])
 
-	def update_acceptTime(self, time,order_ID):
+    return result
 
-		return
+#order functions
+# for order identification we are using the given _id from mongodb
+def create_order(building, room, subtotal, instructions, customer, vendor, cart):
+    order_doc = {
+        "building": building,
+        "room": room,
+        "subTotal": subtotal,
+        "specialInstructions": instructions,
+        "customer": customer,
+        "vendor": vendor,
+        "cartItem": cart,
+        "orderStatus": "Pending",
+        "orderTime": int(datetime.now().strftime("%H%M"))
+    }
+    
+    result = orders.insert_one(order_doc)
+    return result.inserted_id
 
-	def update_pickupTime(self, time,order_ID):
 
-		return
+def get_order(orderID):
+    result = orders.find_one({"_id": ObjectId(orderID)})
+    return result
 
-	def update_deliveryTime(self, time,order_ID):
 
-		return
+def get_order_by_user(userID):
+    result = orders.find({"customer": userID})
+    return list(result)
 
-	def update_confirmationTime(self, time,order_ID):
 
-		return
+def add_agent_to_order(orderID, agent_name):
+    result = orders.update_one(
+        {"_id": ObjectId(orderID)},
+        {"$set": {"agent": agent_name}}
+    )
+    return result.modified_count
+
+
+def update_orderTime(time, orderID):
+    result = orders.update_one(
+        {"_id": ObjectId(orderID)},
+        {"$set": {"orderTime": time}}
+    )
+    return result.modified_count
+
+
+def update_readyTime(time, orderID):
+    result = orders.update_one(
+        {"_id": ObjectId(orderID)},
+        {"$set": {"readyTime": time}}
+    )
+    return result.modified_count
+
+
+def update_acceptTime(time, orderID):
+    result = orders.update_one(
+        {"_id": ObjectId(orderID)},
+        {"$set": {"acceptTime": time}}
+    )
+    return result.modified_count
+
+
+def update_pickupTime(time, orderID):
+    result = orders.update_one(
+        {"_id": ObjectId(orderID)},
+        {"$set": {"pickupTime": time}}
+    )
+    return result.modified_count
+
+
+def update_deliveryTime(time, orderID):
+    result = orders.update_one(
+        {"_id": ObjectId(orderID)},
+        {"$set": {"deliveryTime": time}}
+    )
+    return result.modified_count
+
+
+def update_confirmationTime(time, orderID):
+    result = orders.update_one(
+        {"_id": ObjectId(orderID)},
+        {"$set": {"confirmationTime": time}}
+    )
+    return result.modified_count
