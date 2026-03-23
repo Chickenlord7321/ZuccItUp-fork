@@ -1,6 +1,6 @@
 from collections import defaultdict
 from DB_init import db
-
+import server #or server.py
 
 class Menu():
     def __init__(self, type: str, schedule: list, publishStatus: bool):
@@ -9,9 +9,11 @@ class Menu():
         self.schedule = schedule
         self.publishStatus = publishStatus
 
+    #search by menuItem
     def viewMenu(self):
         keyword = input("Search keyword (leave blank for all): ").strip() #Prompts the search term and removes and accidental spaces
  
+    
         pipeline = [                         #building our mongodb pipeline
             {"$match": {"type": self.type}}, #checking menu type
             {"$unwind": "$menuItem"},        #unwinding the array of menuItem to separate menus
@@ -50,7 +52,7 @@ class Menu():
         
 
     def viewAllMenus(self):
-        menus = list(db.menu.find())
+        menus = server.get_all_menu #kw 
         if not menus: 
             print("No menus are currently available.") #if there is no menus present, prints this message
             return
@@ -101,7 +103,7 @@ class MenuItem():
         cart.add_to_cart(self.name, 1)                       #add cart if in stock
 
     def viewItem(self): 
-        result = list(db.menu.aggregate([                    #runs aggregation pipeline against menu collection and converts it into a list
+        """result = list(db.menu.aggregate([                    #runs aggregation pipeline against menu collection and converts it into a list
             {"$unwind": "$menuItem"},                        #unwinding the array of menuItem to separate menus
             {"$match": {"menuItem.name": {"$regex": f"^{self.name}$", "$options": "i"}}}, #filters to where only the matching item remains
             {"$project": {                                   #selects only the fields required and deletes the rest
@@ -114,8 +116,14 @@ class MenuItem():
                 "menuType": "$type",                         #these two lines pull fields from the menu document to find location and menuType the item belongs
             }},
             {"$limit": 1}                                    #stops at the specific item
-        ]))
- 
+        ]))"""
+
+        #pass in menu item 
+        # needs prompt for menu item name
+        menuItemID = input("Enter menu item name")
+        result = get_menu_item(menuItemID)                  #kw
+        result_list = list(result) #why is result_list greyed out
+
         if not result:                                       #if the item is not found we exit the list and print the message
             print(f"Item '{self.name}' was not found in any menu.")
             return None
@@ -135,7 +143,7 @@ class MenuItem():
         return item                                          #returns the item required
 
     def viewAllItems(self):
-        items = list(db.menu.aggregate([                     #runs the aggregation pipeline on the menu collection and converts it to the python list
+        """items = list(db.menu.aggregate([                     #runs the aggregation pipeline on the menu collection and converts it to the python list
             {"$unwind": "$menuItem"},                        #unwinding the array of menuItem to separate menus
             {"$project": {                                   #selects the fields we want to output
                 "name": "$menuItem.name",                    
@@ -146,7 +154,11 @@ class MenuItem():
                 "menuType": "$type",                         #pulling these two fields from the menu document to find the location and menuType for each item
             }},
             {"$sort": {"location": 1, "menuType": 1, "name": 1}} #sorts the results by location, then menuType and then name alphabetically, grouping the output logically by place, type and such
-        ]))
+        ]))"""
+
+    
+        result = get_menu_item() #called with null to get all menu items
+        items = list(result)     #kw
  
         if not items:
             print("No menu items found.")                    #unlikely but if the database is empty, it will print this

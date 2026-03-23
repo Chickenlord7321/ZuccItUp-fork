@@ -1,3 +1,5 @@
+import server
+
 class User:
     def __init__(self, name: str, email: str, role: str):
 
@@ -21,14 +23,17 @@ class DeliveryAgent(User):
             print(f"Agent with VIUID {self.VIUID} already exists.")
             return None                                                         #error message if the user already exists
     
-        agent_doc = {
+        """agent_doc = {
             "name": self.name,
             "email": self.email,
             "VIUID": self.VIUID,
             "role": self.role,
             "availabilityStatus": self.availibilityStatus,                      # defining the agent to be added to the db with the required details
         }
-        result = db.user.insert_one(agent_doc)                                  #inserting the agent into the db  
+        result = db.user.insert_one(agent_doc)
+                                          """    
+        #kw
+        result = create_user(self.email,self.name,self.VIUID,"agent",self.availibilityStatus)                                                                #inserting the agent into the db  
         print(f"Agent '{self.name}' created successfully.")
         return result.inserted_id                                               #now we print the ID as is in the db
 
@@ -49,7 +54,7 @@ class DeliveryAgent(User):
         return agent                                                            #returns the agent as is
         
     def viewAllAgents(self):
-        agents = list(db.user.find({"role": "Agent"}))                          #we want a list of the agents
+        agents = list(view_all_user(agent))      #kw                    #we want a list of the agents
         if not agents:                                                          #NO AGENTS?!?!?!!?
             print("No delivery agents found.")  
             return []                                                           #returning a list since if we don't it might break the caller of this function
@@ -96,26 +101,29 @@ class Customer(User):
         self.previouslyOrdered
 
     def createCustomer(self):
-        existing = db.user.find_one({"VIUID": self.VIUID, "role": "Customer"})  #find if it exists
+
+        if verify_user(self.VIUID):
+            existing = True
         
         if existing:
             print(f"Customer with VIUID {self.VIUID} already exists.")          #if it exists, why create??????
             return None
- 
+        """
         customer_doc = {
             "name": self.name,
             "email": self.email,
             "VIUID": self.VIUID,
             "role": self.role,
             "previouslyOrdered": self.previouslyOrdered,
-        }                                                                       #details of the customer to add to the db
-        
-        result = db.user.insert_one(customer_doc)                   
+        }  """                                                                     #details of the customer to add to the db
+    
+        #result = db.user.insert_one(customer_doc)
+        result = create_user(self.email,self.name,self.VIUID,"customer")       #kw            
         print(f"Customer '{self.name}' created successfully.")                  #done yay
         return result.inserted_id                                               #returning the ID as inserted into mangoDB
 
     def viewCustomer(self):
-        customer = db.user.find_one({"VIUID": self.VIUID, "role": "Customer"})  #lets find our if the customer even exists
+        customer = view_user(self.VIUID)
         if not customer:
             print(f"No customer found with VIUID {self.VIUID}.")
             return None                                                         #can't view someone that does not exist
@@ -135,7 +143,7 @@ class Customer(User):
 
     def viewAllCustomers(self):
         
-        customers = list(db.user.find({"role": "Customer"}))                    #pulling the list of customers from Mango
+        customers = list(view_all_user("customer"))     #kw               #pulling the list of customers from Mango
         
         if not customers:
             print("No customers found.")
