@@ -178,7 +178,7 @@ class Server:
 				}},
 				{"$limit": 1}
 			])
-			return result
+			return result.to_list()
 
 		result = self.__menu.aggregate([                     #runs the aggregation pipeline on the menu collection and converts it to the python list
 				{"$unwind": "$menuItem"},                        #unwinding the array of menuItem to separate menus
@@ -193,7 +193,7 @@ class Server:
 				{"$sort": {"location": 1, "menuType": 1, "name": 1}} #sorts the results by location, then menuType and then name alphabetically, grouping the output logically by place, type and such
 			])
 
-		return result
+		return result.to_list()
 
 	#order functions
 	# for order identification we are using the given _id from mongodb
