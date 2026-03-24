@@ -218,12 +218,12 @@ class Server:
 		result = self.__order.find_one({"_id": ObjectId(order_ID)})
 		return result
 
-
+	#
 	def get_order_by_user(self, user_ID: str) -> list[dict]:
 		result = self.__order.find({"customer": user_ID})
 		return result.to_list()
 
-
+	#adds agent name to the order with _id
 	def add_agent_to_order(self, order_ID: str, agent_name: str) -> int:
 		result = self.__order.update_one(
 			{"_id": ObjectId(order_ID)},
