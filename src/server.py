@@ -115,8 +115,8 @@ class Server:
 	# Menu functions
 
 	#gets all vendor names
-	def get_vendors():
-		result = menu.distinct("vendor")
+	def get_vendors(self) -> list[dict]:
+		result = self.__menu.distinct("vendor")
 
 		""" for vendor in result
 			print(f" - {vendor}")   #print example for distinct vendors that have menus 
@@ -124,52 +124,49 @@ class Server:
 		return result
 
 	# whichever param is filled will change the query,
-	# if vendorID=upper cafe it will display upper cafe menus
+	# if vendor_ID=upper cafe it will display upper cafe menus
 	# if menuItem = coffee it will find menu with coffee
 	# null of all should return all menus
-	def get_all_menu(vendorID=None,menuItem=None,type=None):
+	def get_all_menus(self, vendor_ID: str=None, menu_item: str=None, menu_type: str=None) -> list[dict]:
 		query = {}
 
-		if vendorID:
-			query["vendor"] = vendorID
+		if vendor_ID:
+			query["vendor"] = vendor_ID
 
-		if menuItem:
-			query["menuItem"] = menuItem
+		if menu_item:
+			query["menuItem"] = menu_item
 
-		if type:
-			query["type"] = type
+		if menu_type:
+			query["type"] = menu_type.title()	# Capitalizes the string
 
-		result = menu.find(query)
-
-		#menu_list = list(result)
-		#not sure to return list, dictionary or result
-		return result
+		result = self.__menu.find(query)
+		return result.to_list()
 
 	#by type and/or by vendor
 	# both params are used it will display the menu with both conditions
 	# works with only one param but will still only display one menu
-	def get_one_menu(vendorID=None,type=None):
+	def get_one_menu(self, vendor_ID: str=None, menu_type: str=None) -> dict:
 		query = {}
 
-		if vendorID:
-			query["vendor"] = vendorID
+		if vendor_ID:
+			query["vendor"] = vendor_ID
 
-		if type:
-			query["type"] = type
+		if menu_type:
+			query["type"] = menu_type.title()
 
-		result = menu.find_one(query)
+		result = self.__menu.find_one(query)
 
 		return result
 
 	#used by view Item or view all items
 	# with param means display one menu item
 	# with param = null display all menus
-	def get_menu_item(menuItemID=None):
+	def get_menu_item(self, menu_item_ID=None) -> dict:
 
-		if menuItemID:
-			result = db.menu.aggregate([                    #runs aggregation pipeline against menu collection and converts it into a list
+		if menu_item_ID:
+			result = self.__menu.aggregate([                    #runs aggregation pipeline against menu collection and converts it into a list
 				{"$unwind": "$menuItem"},                        #unwinding the array of menuItem to separate menus
-				{"$match": {"menuItem.name": {"$regex": menuItemID, "$options": "i"}}}, #filters to where only the matching item remains
+				{"$match": {"menuItem.name": {"$regex": menu_item_ID, "$options": "i"}}}, #filters to where only the matching item remains
 				{"$project": {                                   #selects only the fields required and deletes the rest
 					"name": "$menuItem.name",
 					"price": "$menuItem.price",
@@ -183,7 +180,7 @@ class Server:
 			])
 			return result
 
-		result = menu.aggregate([                     #runs the aggregation pipeline on the menu collection and converts it to the python list
+		result = self.__menu.aggregate([                     #runs the aggregation pipeline on the menu collection and converts it to the python list
 				{"$unwind": "$menuItem"},                        #unwinding the array of menuItem to separate menus
 				{"$project": {                                   #selects the fields we want to output
 					"name": "$menuItem.name",
@@ -200,7 +197,7 @@ class Server:
 
 	#order functions
 	# for order identification we are using the given _id from mongodb
-	def create_order(building, room, subtotal, instructions, customer, vendor, cart):
+	def create_order(self, building: str, room: str, subtotal: float, instructions: str, customer: str, vendor: str, cart: list[dict]):
 		order_doc = {
 			"building": building,
 			"room": room,
@@ -210,74 +207,74 @@ class Server:
 			"vendor": vendor,
 			"cartItem": cart,
 			"orderStatus": "Pending",
-			"orderTime": int(datetime.now().strftime("%H%M"))
+			"orderTime": datetime.now().strftime("%H%M")	# I think this should be just datetime.now()?
 		}
 
-		result = orders.insert_one(order_doc)
+		result = self.__order.insert_one(order_doc)
 		return result.inserted_id
 
 
-	def get_order(orderID):
-		result = orders.find_one({"_id": ObjectId(orderID)})
+	def get_order(self, order_ID: str) -> dict:
+		result = self.__order.find_one({"_id": ObjectId(order_ID)})
 		return result
 
 
-	def get_order_by_user(userID):
-		result = orders.find({"customer": userID})
-		return list(result)
+	def get_order_by_user(self, user_ID: str) -> list[dict]:
+		result = self.__order.find({"customer": user_ID})
+		return result.to_list()
 
 
-	def add_agent_to_order(orderID, agent_name):
-		result = orders.update_one(
-			{"_id": ObjectId(orderID)},
+	def add_agent_to_order(self, order_ID: str, agent_name: str) -> int:
+		result = self.__order.update_one(
+			{"_id": ObjectId(order_ID)},
 			{"$set": {"agent": agent_name}}
 		)
 		return result.modified_count
 
 
-	def update_orderTime(time, orderID):
-		result = orders.update_one(
-			{"_id": ObjectId(orderID)},
+	def update_orderTime(self, time: datetime, order_ID: str):
+		result = self.__order.update_one(
+			{"_id": ObjectId(order_ID)},
 			{"$set": {"orderTime": time}}
 		)
 		return result.modified_count
 
 
-	def update_readyTime(time, orderID):
-		result = orders.update_one(
-			{"_id": ObjectId(orderID)},
+	def update_readyTime(self, time: datetime, order_ID: str):
+		result = self.__order.update_one(
+			{"_id": ObjectId(order_ID)},
 			{"$set": {"readyTime": time}}
 		)
 		return result.modified_count
 
 
-	def update_acceptTime(time, orderID):
-		result = orders.update_one(
-			{"_id": ObjectId(orderID)},
+	def update_acceptTime(self, time: datetime, order_ID: str):
+		result = self.__order.update_one(
+			{"_id": ObjectId(order_ID)},
 			{"$set": {"acceptTime": time}}
 		)
 		return result.modified_count
 
 
-	def update_pickupTime(time, orderID):
-		result = orders.update_one(
-			{"_id": ObjectId(orderID)},
+	def update_pickupTime(self, time: datetime, order_ID: str):
+		result = self.__order.update_one(
+			{"_id": ObjectId(order_ID)},
 			{"$set": {"pickupTime": time}}
 		)
 		return result.modified_count
 
 
-	def update_deliveryTime(time, orderID):
-		result = orders.update_one(
-			{"_id": ObjectId(orderID)},
+	def update_deliveryTime(self, time: datetime, order_ID: str):
+		result = self.__order.update_one(
+			{"_id": ObjectId(order_ID)},
 			{"$set": {"deliveryTime": time}}
 		)
 		return result.modified_count
 
 
-	def update_confirmationTime(time, orderID):
-		result = orders.update_one(
-			{"_id": ObjectId(orderID)},
+	def update_confirmationTime(self, time: datetime, order_ID: str):
+		result = self.__order.update_one(
+			{"_id": ObjectId(order_ID)},
 			{"$set": {"confirmationTime": time}}
 		)
 		return result.modified_count
