@@ -210,7 +210,6 @@ class Server:
 		result = self.__order.find_one({"_id": ObjectId(order_id)})
 		return result
 
-
 	def get_orders_by_user(self, user_id: str) -> list[dict]:
 		result = self.__order.find({
 			"$or": [
