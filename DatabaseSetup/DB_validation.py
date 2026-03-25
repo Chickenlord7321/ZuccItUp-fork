@@ -217,11 +217,17 @@ db.create_collection("order", validator={
 
             "vendor": {
                 "bsonType": "string",
+				"minLength": 9,
+				"maxLength": 9,
+				"pattern": "[0-9]{9}",
                 "description": "Name of the Vendor order is from"
             },
 
             "customer": {
                 "bsonType": "string",
+				"minLength": 9,
+				"maxLength": 9,
+				"pattern": "[0-9]{9}",
                 "description": "VIU ID of the customer who placed the order"
             },
 
