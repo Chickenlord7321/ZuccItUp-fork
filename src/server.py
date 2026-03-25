@@ -93,12 +93,14 @@ class Server:
 			raise ValueError("Invalid parameter in create_user. Ensure that parameters follow the criteria given in DB_validation.py")
 
 	def deactivate_user(self, viu_id: str):
-		self.__user.update_one(
+		result = self.__user.update_one(
 			{"VIUID": viu_id},
 			{"$set":
 				 {"active": False}
 			}
 		)
+		if result.matched_count == 0:
+			raise ValueError("Invalid VIU ID in deactivate_user()")
 
 	def view_all_users(self, role: str) -> list[dict]:
 		results = self.__user.find({"role": role})
@@ -113,16 +115,16 @@ class Server:
 	#gets all vendor names
 
 	# NOTE: we don't need get_vendors since you could just call view_all_users("Vendor") to do the same thing
-	def get_vendors(self) -> list[dict]:
-		result = self.__menu.distinct("vendor")
-
-		""" for vendor in result
-			print(f" - {vendor}")   #print example for distinct vendors that have menus 
-		"""
-		return result
+	# def get_vendors(self) -> list[dict]:
+	# 	result = self.__menu.distinct("vendor")
+	#
+	# 	""" for vendor in result
+	# 		print(f" - {vendor}")   #print example for distinct vendors that have menus
+	# 	"""
+	# 	return result
 
 	# whichever param is filled will change the query,
-	# if vendor_id=upper cafe it will display upper cafe menus
+	# if vendor_id=upper cafe's ID it will display upper cafe menus
 	# if menuItem = coffee it will find menu with coffee
 	# null of all should return all menus
 	def get_all_menus(self, vendor_id: str=None, menu_item: str=None, menu_type: str=None) -> list[dict]:
@@ -142,9 +144,9 @@ class Server:
 
 	#by type and/or by vendor
 	# both params are used it will display the menu with both conditions
-	def get_one_menu(self, vendor_name: str, menu_type: str) -> dict:
+	def get_one_menu(self, vendor_id: str, menu_type: str) -> dict:
 		query = {
-			"vendor": vendor_name,
+			"vendor": vendor_id,
 			"type": menu_type.title()
 		}
 		return self.__menu.find_one(query)
