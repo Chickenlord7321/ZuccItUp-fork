@@ -31,7 +31,7 @@ def input_str(msg: str, valid_answers: list[str] = None) -> str:
 	"""
 	Gets string input and checks if the user typed "quit" or "logout".
 	:param msg: The message you want to display to the user
-	:param valid_answers: A list of acceptable answers. Optional. You do not need to include "quit" or "logout" in this list.
+	:param valid_answers: (optional) A list of acceptable answers. You do not need to include "quit" or "logout" in this list.
 	:return: the user's input
 	"""
 
@@ -52,6 +52,13 @@ def input_str(msg: str, valid_answers: list[str] = None) -> str:
 # Stackoverflow to explain sys.maxsize:
 # https://stackoverflow.com/questions/7604966/maximum-and-minimum-values-for-ints
 def input_int(msg: str, minimum: int = -sys.maxsize - 1, maximum: int = sys.maxsize):
+	"""
+	Gets integer input and checks if the user typed "quit" or "logout".
+	:param msg: The message you want to display to the user.
+	:param minimum: The minimum value the user is allowed to input.
+	:param maximum: The maximum value the user is allowed to input.
+	:return: The user's input, as an int.
+	"""
 	while True:
 		user_input = check_logout_or_quit(input(msg))
 		try:
