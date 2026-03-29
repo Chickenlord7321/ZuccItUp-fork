@@ -207,7 +207,6 @@ class Customer(User):
 	def list_vendors(self) -> int:
 		vendor_table = PrettyTable()
 		vendor_table.align = "l"		# Align contents to the left
-		vendor_table.sortby = "No."		# Sort table by number
 		vendor_table.field_names = ["No.", "Vendor", "Location", "Hours of Operation", "Currently Open", "Email"]		# Columns
 
 		# Add vendors as rows in the table

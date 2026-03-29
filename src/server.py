@@ -1,6 +1,7 @@
 # Authors: Caleb, Keenan
 from datetime import datetime						# for handling times and dates
 from pymongo import MongoClient as MangoClient		# MangoDB Client
+from pymongo.errors import OperationFailure			# MongoDB exception class
 from bson.objectid import ObjectId					# for MangoDB _id
 import bcrypt										# for hashing and salting passwords
 
@@ -34,7 +35,7 @@ class Server:
 			self.__db = self.__client.get_database(self.__project)
 			# Ping the database to check that username and password are actually correct
 			self.__db.command("ping")
-		except Exception:
+		except OperationFailure:
 			# Username and/or password were NOT correct
 			raise ValueError("Could not connect to MongoDB: username or password was incorrect")
 		else:

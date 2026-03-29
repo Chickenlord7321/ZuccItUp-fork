@@ -110,7 +110,7 @@ login_or_signup()
 if user.get_role() == "Customer":
 	customer = Customer(server, user)
 	# TODO: Enter Location (user location)
-	print("\n─" * 40, "\nLet's set up your location.")
+	print("─" * 40, "\nLet's set up your location.")
 	your_building = input_str("Enter your building number\n> ", "^[1-4]\\d\\d$")
 	your_room = input_str("Enter your room number\n> ", "^[1-5]\\d\\d\\w?$")
 
