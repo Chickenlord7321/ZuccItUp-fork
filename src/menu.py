@@ -8,11 +8,11 @@ from src.server import Server #must import class test KW
 class Menu():
     # Constructor for Menu
     # Initializes menu type, schedule, and publish status
-    def __init__(self, type: str, schedule: list, publishStatus: bool, server):
+    def __init__(self, type: str, schedule: list, server):
 
         self.type = type
         self.schedule = schedule
-        #self.publishStatus = publishStatus
+        #self.publishStatus = publishStatus #removed from param as well
         self.server = server
 
     #search by menuItem

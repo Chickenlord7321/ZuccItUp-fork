@@ -21,11 +21,13 @@ def test_view_menu(mock_db):
 
     menu = Menu(
         #db=mock_db,
+        type = "Breakfast",
         schedule=["Monday-Friday: 7:30am - 9:30am"],
         server=fake_server
+        
      )
 
-    menu.type = "Breakfast"
+    
     
 
     with patch("builtins.input",return_value="Coffee"):
