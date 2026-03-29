@@ -82,7 +82,7 @@ def login_or_signup():
 		signin_option = input_int("Please select an option:\n1. Login (type 1)\n2. Signup (type 2)\n> ", 1, 2)
 
 		if signin_option == 1:		# Login
-			your_viu_id = input_str("Please enter your VIU ID number\n> ")
+			your_viu_id = input_str("Please enter your VIU ID number\n> ", "^[0-9]{9}$")
 			your_password = getpass("Please enter your password\n> ")
 			not_signed_in = not user.login(your_viu_id, your_password)
 			if not_signed_in:
@@ -91,10 +91,11 @@ def login_or_signup():
 			print("Let's get you started!")
 			signin_option = input_int("Choose a role:\n1. Customer\n2. Delivery Agent", 1, 2)
 			your_role = "Customer" if signin_option == 1 else "Agent"
-			your_viu_id = input_str("Please enter your VIU ID number\n> ")
+			your_viu_id = input_str("Please enter your VIU ID number\n> ", "^[0-9]{9}$")
 			your_password = getpass("Please enter a password\n> ")
 			your_name = input_str("Please enter your name\n> ")
-			your_email = input_str("Please enter your email address\n> ")
+			your_email = input_str("Please enter your email address\n> ",
+								   "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 			not_signed_in = not user.signup(viu_id=your_viu_id, passwd=your_password, name=your_name, email=your_email, role=your_role)
 			if not_signed_in:
 				print("Sorry, something went wrong. Please try again.")
@@ -107,6 +108,7 @@ print("At any time, you can type 'quit' to close the program, or type 'logout' t
 login_or_signup()
 
 if user.get_role() == "Customer":
+	customer = Customer(server, user)
 	# TODO: Enter Location (user location)
 	your_building = input_str("Enter your building number\n> ", "^[1-4]\\d\\d$")
 	your_room = input_str("Enter your room number\n> ", "^[1-5]\\d\\d\\w?$")
@@ -115,6 +117,8 @@ if user.get_role() == "Customer":
 	customer_option = input_str("What do you want to do?\n1. Create an Order \n2. View Your Cart")
 	if customer_option == 1:	# Create an Order
 		# TODO: List vendors
+		vendors = customer.list_vendors()
+		print(vendors[0])
 		# TODO: Customer selects vendor
 		# TODO: List menus for that vendor
 		# TODO: Customer selects a menu

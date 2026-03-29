@@ -4,7 +4,6 @@
 # It includes a base User class and specialized subclasses:
 # DeliveryAgent, Customer, and Vendor.
 
-import copy					# For making deep copies of parent classes
 from server import Server
 from debug import DEBUG_MODE
 
@@ -180,11 +179,7 @@ class DeliveryAgent(User):
 # Customer
 #────────────────────────────────────────────── 
 
-
-
-# Customer class inherits from User
 # Represents a customer who can place orders
-
 class Customer(User):
 	def __init__(self, svr: Server, *args):
 		"""
@@ -204,6 +199,13 @@ class Customer(User):
 		else:
 			super().__init__(svr)	# Use __init__() from User class
 		self.previouslyOrdered = []		# Not sure this is needed?
+
+	def list_vendors(self) -> tuple[str, int]:
+		vendors = self.__server.view_all_users("Vendor")
+		output = ""
+		for i in range(len(vendors)):
+			output += f"{i + 1}. {vendors[i]['name']}\n"
+		return output, len(vendors)
 
 	# Creates a new customer in the system
 	def createCustomer(self):

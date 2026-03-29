@@ -310,7 +310,6 @@ class Server:
 			"cartItem": cart,
 			"orderStatus": "Pending",
 			"orderTime": datetime.now(),
-   
 			"readyTime": None,
 			"acceptTime": None,
 			"pickupTime": None,
