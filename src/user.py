@@ -25,9 +25,7 @@ class User:
 
 	def login(self, viu_id: str, password: str) -> bool:
 		"""
-		Logs the user in.
-		:param viu_id: Obvious
-		:param password: Also obvious
+		Logs the user in and checks if the user exists.
 		:return: True if user is in the database, False if they are not in the database
 		"""
 		is_in_db = self.__server.verify_user(viu_id, password)
@@ -41,10 +39,12 @@ class User:
 		return is_in_db
 
 	def logout(self):
+		"""Resets the current user to empty"""
 		self.__current_user = ""
 		self.__role = ""
 
 	def signup(self, viu_id: str, passwd: str, name: str, email: str, role: str) -> bool:
+		"""Creates a new user"""
 		try:
 			if role.lower() == "agent":		# then we need to need add availability status
 				self.__server.create_user(viu_id=viu_id, passwd=passwd, name=name, email=email, role=role, availability_status=True)
@@ -74,15 +74,24 @@ class DeliveryAgent(User):
 	#
 	# Also also here is an explanation of wtf self.__dict__ means:
 	# https://realpython.com/python-dict-attribute/
-	def __init__(self, *args):
-		# Copy User object's attributes
-		if type(args[0]) is User:
-			self.__dict__ = copy.deepcopy(args[0].__dict__)
-			self.__availability_status = args[1]
+	def __init__(self, svr: Server, *args):
+		"""
+		A Delivery Agent is a user type of the more general User class.
+		This class contains business-layer functions that only the Delivery Agent uses.
+		:param svr: A Server object to make database calls
+		:param args: An optional argument. If included, this makes a shallow copy of
+					the User object passed as an argument. This means that when an attribute
+					of the User object changes, the Agent's attributes will also change.
+		:raises ValueError: If *args contains anything that isn't a User object.
+		"""
+		if len(args) == 1:			# Make a shallow copy of the User object passed in
+			if type(args[0]) is User:
+				self.__dict__ = args[0].__dict__.copy()
+			else:
+				raise ValueError("Invalid argument type in DeliveryAgent.__init__(). *args only accepts a User object")
 		else:
-			# Inherit attributes from User class
-			super().__init__(*args[:4])
-			self.__dict__ = args[4]
+			super().__init__(svr)	# Use __init__() from User class
+		self.__availability_status = False	# Should this be True or False by default?
 
 	def get_availability_status(self):
 		return self.__availability_status
@@ -133,7 +142,6 @@ class DeliveryAgent(User):
 	# Returns a list of all delivery agents
 	def viewAllAgents(self):
 		agents = self.server.view_all_user("agent")     #kw                            #we want a list of the agents
-												 #view_all_user is not defined and not in camel Case
 		if not agents:                                                          #NO AGENTS?!?!?!!?
 			print("No delivery agents found.")
 			return []                                                           #returning a list since if we don't it might break the caller of this function
@@ -178,14 +186,24 @@ class DeliveryAgent(User):
 # Represents a customer who can place orders
 
 class Customer(User):
-
-	# Constructor for Customer
-	# Adds VIU ID and tracks previous orders
-	def __init__(self, VIUID: int, name: str, email: str, role: str, server):
-		User.__init__(self, name, email, role)
-		self.VIUID = VIUID
-		self.previouslyOrdered = []
-		self.server = server
+	def __init__(self, svr: Server, *args):
+		"""
+		A Customer is a user type of the more general User class.
+		This class contains business-layer functions that only the Customer uses.
+		:param svr: A Server object to make database calls
+		:param args: An optional argument. If included, this makes a shallow copy of
+					the User object passed as an argument. This means that when an attribute
+					of the User object changes, the Customer's attributes will also change.
+		:raises ValueError: If *args contains anything that isn't a User object.
+		"""
+		if len(args) == 1:			# Make a shallow copy of the User object pass in
+			if type(args[0]) is User:
+				self.__dict__ = args[0].__dict__.copy()
+			else:
+				raise ValueError("Invalid argument type in Customer.__init__(). *args only accepts a User object")
+		else:
+			super().__init__(svr)	# Use __init__() from User class
+		self.previouslyOrdered = []		# Not sure this is needed?
 
 	# Creates a new customer in the system
 	def createCustomer(self):
