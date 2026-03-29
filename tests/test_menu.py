@@ -1,5 +1,5 @@
 from menu import Menu
-from menu import MenuItem
+#from menu import MenuItem
 from unittest.mock import MagicMock, patch
 
 """Unit Tests for menu.py"""
@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 def test_view_menu(mock_db):
 
     fake_server = MagicMock()
-    
+
     #This is the test data that the function will be run on
     fake_server.search_menu_items.return_value = [
         {
