@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 """Creates a param that can be placed in each unit test function as the mock db"""
 @pytest.fixture
 def mock_db():
-    with patch("server.MongoClient") as mock_mongo:
+    with patch("src.server.MongoClient") as mock_mongo:
         mock_client = MagicMock()
         mock_mongo.return_value = mock_client
 
