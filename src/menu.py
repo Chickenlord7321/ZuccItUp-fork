@@ -12,7 +12,7 @@ class Menu():
 
         self.type = type
         self.schedule = schedule
-        self.publishStatus = publishStatus
+        #self.publishStatus = publishStatus
         self.server = server
 
     #search by menuItem
