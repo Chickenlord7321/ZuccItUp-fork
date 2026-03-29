@@ -1,4 +1,4 @@
-from menu import Menu
+from src.menu import Menu
 #from menu import MenuItem
 from unittest.mock import MagicMock, patch
 

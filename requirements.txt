@@ -2,4 +2,3 @@ bcrypt==5.0.0
 dnspython==2.8.0
 pymongo==4.16.0
 pytest==8.3.4
-pytest-mongodb==3.1.0
