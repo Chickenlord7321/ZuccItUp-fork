@@ -118,8 +118,7 @@ if user.get_role() == "Customer":
 	customer_option = input_int("What do you want to do?\n1. Create an Order \n2. View Your Cart\n> ", 1, 2)
 	if customer_option == 1:	# Create an Order
 		# TODO: List vendors
-		vendors = customer.list_vendors()
-		print(vendors[0])
+		num_vendors = customer.list_vendors()
 		# TODO: Customer selects vendor
 		# TODO: List menus for that vendor
 		# TODO: Customer selects a menu

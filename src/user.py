@@ -6,6 +6,9 @@
 
 from server import Server
 from debug import DEBUG_MODE
+from datetime import datetime
+from prettytable import PrettyTable
+# See how to use PrettyTable: https://pypi.org/project/prettytable/
 
 class User:
 	# Constructor for the base User class
@@ -200,12 +203,31 @@ class Customer(User):
 			super().__init__(svr)	# Use __init__() from User class
 		self.previouslyOrdered = []		# Not sure this is needed?
 
-	def list_vendors(self) -> tuple[str, int]:
+	# Prints out the names of all the vendors
+	def list_vendors(self) -> int:
+		vendor_table = PrettyTable()
+		vendor_table.align = "l"		# Align contents to the left
+		vendor_table.sortby = "No."		# Sort table by number
+		vendor_table.field_names = ["No.", "Vendor", "Location", "Hours of Operation", "Currently Open", "Email"]		# Columns
+
+		# Add vendors as rows in the table
 		vendors = self.__server.view_all_users("Vendor")
-		output = ""
 		for i in range(len(vendors)):
-			output += f"{i + 1}. {vendors[i]['name']}\n"
-		return output, len(vendors)
+			hrs_of_op = vendors[i]["hoursOfOperation"]	# Shorthand for hoursOfOperation, cos it's a long one
+			start = datetime.strptime(hrs_of_op["startTime"], "%H:%M")	# Get startTime as datetime object
+			end = datetime.strptime(hrs_of_op["endTime"], "%H:%M")		# Get endTime as datetime object
+			is_open = start <= datetime.now() <= end							# Check if the current time is between start and end
+
+			vendor_table.add_row([
+				f"{i + 1}",								# No.
+				vendors[i]["name"],						# Vendor
+				vendors[i]["location"],					# Location
+				hrs_of_op["days"] + ", " + hrs_of_op["startTime"] + " - " + hrs_of_op["endTime"],	# e.g. "Mon-Fri, 7:30 - 19:00"
+				"Yes" if is_open else "No",				# Currently Open
+				vendors[i]["email"],					# Email
+			])
+		print(vendor_table)
+		return len(vendors)
 
 	# Creates a new customer in the system
 	def createCustomer(self):
