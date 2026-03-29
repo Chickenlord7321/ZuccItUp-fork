@@ -2,7 +2,7 @@
 
 
 from collections import defaultdict
-import server #or server.py
+from server import Server #must import class
 
 class Menu():
     # Constructor for Menu
