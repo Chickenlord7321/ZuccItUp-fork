@@ -18,23 +18,6 @@ class Menu():
     def viewMenu(self):
         keyword = input("Search keyword (leave blank for all): ").strip() #Prompts the search term and removes any accidental spaces
  
-        """ 
-        pipeline = [                         #building our mongodb pipeline
-            {"$match": {"type": self.type}}, #checking menu type
-            {"$unwind": "$menuItem"},        #unwinding the array of menuItem to separate menus
-        ]
-        if keyword:                          #checks for empty string
-            pipeline.append(                 #if keyword is present, filters items whose name field contains the keyword
-                {"$match": {"menuItem.name": {"$regex": keyword, "$options": "i"}}} #options makes it case-insensitive
-            )
-        pipeline.append({"$project": {       #parameters to select fields
-            "name": "$menuItem.name",        #all of these tell mangodb to output the field and pull the value from the db
-            "price": "$menuItem.price",
-            "description": "$menuItem.description",
-            "inStock": "$menuItem.inStock",
-            "allergens": "$menuItem.allergens",
-        }})
-        """
                                                 
         items = self.server.search_menu_items(menu_type=self.type, keyword=keyword or None) #changed to call server.py
         if not items:

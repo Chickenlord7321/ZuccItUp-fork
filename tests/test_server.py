@@ -7,6 +7,27 @@ from unittest.mock import patch, MagicMock
 
 """Unit Tests for server.py and DB actions"""
 
+""" Format for average Unit Test 
+
+def test_view_menu(mock_db):
+    mock_menu_collection = MagicMock()
+    mock_db.__viewmenu__.return_value = mock_menu_collection
+
+                             #This is the test data that the function will be run on
+    mock_menu_collection.find.return_value = [
+
+    ]
+
+    menu = Menu(mock_db)
+    result = menu.viewMenu() #function call of the function being tested
+
+                             #this is what the function return based on the test data defined above
+    assert result == [
+
+    ]
+
+
+"""
 
 @patch("server.MongoClient")
 def test_init_success(mock_mongo):
