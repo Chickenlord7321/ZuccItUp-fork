@@ -1156,6 +1156,57 @@ class TestGetPendingOrders(unittest.TestCase):
         mock_server.get_all_orders.assert_called_once() 
 """
 
+# ── PRINT ORDER TABLE TESTS ───────────────────────────────────────────────────────
+
+class TestPrintOrderTable(unittest.TestCase):
+    """Tests for _print_order_table helper"""
+
+    @patch('builtins.print')
+    def test_print_order_table_with_subtotal_shows_correct_columns(self, mock_print):
+        """Test prints subtotal column when show_subtotal=True"""
+        orders = [
+            {"customer": "Alice", "vendor": "Upper Cafe", "building": "200", 
+             "room": "101", "subTotal": 15.50}
+        ]
+        
+        _print_order_table(orders, show_subtotal=True)
+        
+        # Check header contains "Subtotal"
+        calls = [str(c) for c in mock_print.call_args_list]
+        header_printed = any("Subtotal" in str(c) for c in calls)
+        self.assertTrue(header_printed)
+
+    @patch('builtins.print')
+    def test_print_order_table_without_subtotal_hides_column(self, mock_print):
+        """Test hides subtotal column when show_subtotal=False"""
+        orders = [
+            {"customer": "Alice", "vendor": "Upper Cafe", "building": "200", 
+             "room": "101"}
+        ]
+        
+        _print_order_table(orders, show_subtotal=False)
+        
+        # Check header does NOT contain "Subtotal"
+        calls = [str(c) for c in mock_print.call_args_list]
+        header_printed = any("Subtotal" in str(c) for c in calls)
+        self.assertFalse(header_printed)
+
+    @patch('builtins.print')
+    def test_print_order_table_prints_all_orders(self, mock_print):
+        """Test prints all orders in list"""
+        orders = [
+            {"customer": "Alice", "vendor": "Upper Cafe", "building": "200", 
+             "room": "101", "subTotal": 15.50},
+            {"customer": "Bob", "vendor": "Lower Cafe", "building": "210", 
+             "room": "202", "subTotal": 20.00}
+        ]
+        
+        _print_order_table(orders)
+        
+        # Should print at least 4 lines (header + separator + 2 orders)
+        self.assertGreaterEqual(mock_print.call_count, 4)
+
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
