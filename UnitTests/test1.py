@@ -1241,5 +1241,42 @@ class TestViewPendingOrders(unittest.TestCase):
         
         mock_print_table.assert_called_once_with(fake_orders)
 
+# ── SET AVAILABILITY TESTS ───────────────────────────────────────────────────────
+
+class TestSetAvailability(unittest.TestCase):
+    """Tests for _set_availability"""
+
+    @patch('builtins.input', return_value='n')
+    @patch('builtins.print')
+    def test_set_availability_no_change_when_user_declines(self, mock_print, mock_input):
+        """Test doesn't change status when user enters 'n'"""
+        agent = make_mock_agent(available=True)
+        agent.setAvailability = MagicMock()
+        
+        _set_availability(agent)
+        
+        agent.setAvailability.assert_not_called()
+
+    @patch('builtins.input', return_value='y')
+    def test_set_availability_toggles_when_user_confirms(self, mock_input):
+        """Test toggles availability when user enters 'y'"""
+        agent = make_mock_agent(available=True)
+        agent.setAvailability = MagicMock()
+        
+        _set_availability(agent)
+        
+        agent.setAvailability.assert_called_once_with(False)
+
+    @patch('builtins.input', return_value='y')
+    def test_set_availability_toggles_from_false_to_true(self, mock_input):
+        """Test toggles from unavailable to available"""
+        agent = make_mock_agent(available=False)
+        agent.setAvailability = MagicMock()
+        
+        _set_availability(agent)
+        
+        agent.setAvailability.assert_called_once_with(True)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
