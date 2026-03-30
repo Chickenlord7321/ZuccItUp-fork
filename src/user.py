@@ -4,8 +4,12 @@
 # It includes a base User class and specialized subclasses:
 # DeliveryAgent, Customer, and Vendor.
 
-import copy					# For making deep copies of parent classes
 from server import Server
+from debug import DEBUG_MODE		# for debug mode
+from copy import copy				# for making shallow copies of parent classes
+from datetime import datetime		# for handling times and dates
+from prettytable import PrettyTable
+# See how to use PrettyTable: https://pypi.org/project/prettytable/
 
 class User:
 	# Constructor for the base User class
@@ -24,25 +28,26 @@ class User:
 
 	def login(self, viu_id: str, password: str) -> bool:
 		"""
-		Logs the user in.
-		:param viu_id: Obvious
-		:param password: Also obvious
+		Logs the user in and checks if the user exists.
 		:return: True if user is in the database, False if they are not in the database
 		"""
 		is_in_db = self.__server.verify_user(viu_id, password)
 		if is_in_db:
 			self.__current_user = viu_id
 			self.__role = self.__server.view_user(viu_id)["role"]
-			# DEBUG
-			print("Current user: ", self.__current_user)
-			print("Role: ", self.__role)
+
+			if DEBUG_MODE:
+				print("Current user: ", self.__current_user)
+				print("Role: ", self.__role)
 		return is_in_db
 
 	def logout(self):
+		"""Resets the current user to empty"""
 		self.__current_user = ""
 		self.__role = ""
 
 	def signup(self, viu_id: str, passwd: str, name: str, email: str, role: str) -> bool:
+		"""Creates a new user"""
 		try:
 			if role.lower() == "agent":		# then we need to need add availability status
 				self.__server.create_user(viu_id=viu_id, passwd=passwd, name=name, email=email, role=role, availability_status=True)
@@ -72,15 +77,24 @@ class DeliveryAgent(User):
 	#
 	# Also also here is an explanation of wtf self.__dict__ means:
 	# https://realpython.com/python-dict-attribute/
-	def __init__(self, *args):
-		# Copy User object's attributes
-		if type(args[0]) is User:
-			self.__dict__ = copy.deepcopy(args[0].__dict__)
-			self.__availability_status = args[1]
+	def __init__(self, svr: Server, *args):
+		"""
+		A Delivery Agent is a user type of the more general User class.
+		This class contains business-layer functions that only the Delivery Agent uses.
+		:param svr: A Server object to make database calls
+		:param args: An optional argument. If included, this makes a shallow copy of
+					the User object passed as an argument. This means that when an attribute
+					of the User object changes, the Agent's attributes will also change.
+		:raises ValueError: If *args contains anything that isn't a User object.
+		"""
+		if len(args) == 1:			# Make a shallow copy of the User object passed in
+			if type(args[0]) is User:
+				self.__dict__ = copy(args[0].__dict__)
+			else:
+				raise ValueError("Invalid argument type in DeliveryAgent.__init__(). *args only accepts a User object")
 		else:
-			# Inherit attributes from User class
-			super().__init__(*args[:4])
-			self.__dict__ = args[4]
+			super().__init__(svr)	# Use __init__() from User class
+		self.__availability_status = False	# Should this be True or False by default?
 
 	def get_availability_status(self):
 		return self.__availability_status
@@ -131,7 +145,6 @@ class DeliveryAgent(User):
 	# Returns a list of all delivery agents
 	def viewAllAgents(self):
 		agents = self.server.view_all_user("agent")     #kw                            #we want a list of the agents
-												 #view_all_user is not defined and not in camel Case
 		if not agents:                                                          #NO AGENTS?!?!?!!?
 			print("No delivery agents found.")
 			return []                                                           #returning a list since if we don't it might break the caller of this function
@@ -170,20 +183,51 @@ class DeliveryAgent(User):
 # Customer
 #────────────────────────────────────────────── 
 
-
-
-# Customer class inherits from User
 # Represents a customer who can place orders
-
 class Customer(User):
+	def __init__(self, svr: Server, *args):
+		"""
+		A Customer is a user type of the more general User class.
+		This class contains business-layer functions that only the Customer uses.
+		:param svr: A Server object to make database calls
+		:param args: An optional argument. If included, this makes a shallow copy of
+					the User object passed as an argument. This means that when an attribute
+					of the User object changes, the Customer's attributes will also change.
+		:raises ValueError: If *args contains anything that isn't a User object.
+		"""
+		if len(args) == 1:			# Make a shallow copy of the User object pass in
+			if type(args[0]) is User:
+				self.__dict__ = copy(args[0].__dict__) 		# shallow copy
+			else:
+				raise ValueError("Invalid argument type in Customer.__init__(). *args only accepts a User object")
+		else:
+			super().__init__(svr)	# Use __init__() from User class
+		self.previouslyOrdered = []		# Not sure this is needed?
 
-	# Constructor for Customer
-	# Adds VIU ID and tracks previous orders
-	def __init__(self, VIUID: int, name: str, email: str, role: str, server):
-		User.__init__(self, name, email, role)
-		self.VIUID = VIUID
-		self.previouslyOrdered = []
-		self.server = server
+	# Prints out the names of all the vendors
+	def list_vendors(self) -> int:
+		vendor_table = PrettyTable()
+		vendor_table.align = "l"		# Align contents to the left
+		vendor_table.field_names = ["No.", "Vendor", "Location", "Hours of Operation", "Currently Open", "Email"]		# Columns
+
+		# Add vendors as rows in the table
+		vendors = self.__server.view_all_users("Vendor")
+		for i in range(len(vendors)):
+			hrs_of_op = vendors[i]["hoursOfOperation"]	# Shorthand for hoursOfOperation, cos it's a long one
+			start = datetime.strptime(hrs_of_op["startTime"], "%H:%M")	# Get startTime as datetime object
+			end = datetime.strptime(hrs_of_op["endTime"], "%H:%M")		# Get endTime as datetime object
+			is_open = start <= datetime.now() <= end							# Check if the current time is between start and end
+
+			vendor_table.add_row([
+				f"{i + 1}",								# No.
+				vendors[i]["name"],						# Vendor
+				vendors[i]["location"],					# Location
+				hrs_of_op["days"] + ", " + hrs_of_op["startTime"] + " - " + hrs_of_op["endTime"],	# e.g. "Mon-Fri, 7:30 - 19:00"
+				"Yes" if is_open else "No",				# Currently Open
+				vendors[i]["email"],					# Email
+			])
+		print(vendor_table)
+		return len(vendors)
 
 	# Creates a new customer in the system
 	def createCustomer(self):
@@ -258,30 +302,3 @@ class Customer(User):
 			return True                                                         #if verified, less print it
 		print(f"VIUID {self.VIUID} could not be verified.")
 		return False
-
-
-
-#IDK IF YOU GUYS WANT ME TO ACTUALLY CODE THIS PART??
-#──────────────────────────────────────────────
-# vEnDoR
-#──────────────────────────────────────────────
-
-# Vendor class inherits from User
-# Represents a food vendor on campus
-
-class Vendor(User):
-
-	# Constructor for Vendor
-	# Stores vendor location and hours of operation
-	def __init__(self, location: str, hoursOfOperations: list, name: str, email: str, role: str):
-		User.__init__(self, name, email, role)
-		self.location = location
-		self.hoursOfOperations = hoursOfOperations
-
-	# Returns details of a specific vendor
-	def viewVendor(self):
-		pass
-
-	# Returns a list of all vendors
-	def viewAllVendors(self):
-		pass
