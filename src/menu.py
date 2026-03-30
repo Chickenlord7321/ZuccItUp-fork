@@ -2,23 +2,39 @@
 
 
 from collections import defaultdict
-from src.server import Server #must import class test KW
-#Kw added src.server for unit test fixing 
+import server #or server.py
 
 class Menu():
     # Constructor for Menu
     # Initializes menu type, schedule, and publish status
-    def __init__(self, type: str, schedule: list, server):
+    def __init__(self, type: str, schedule: list, publishStatus: bool, server):
 
         self.type = type
         self.schedule = schedule
-        #self.publishStatus = publishStatus #removed from param as well
+        self.publishStatus = publishStatus
         self.server = server
 
     #search by menuItem
     def viewMenu(self):
         keyword = input("Search keyword (leave blank for all): ").strip() #Prompts the search term and removes any accidental spaces
  
+        """ 
+        pipeline = [                         #building our mongodb pipeline
+            {"$match": {"type": self.type}}, #checking menu type
+            {"$unwind": "$menuItem"},        #unwinding the array of menuItem to separate menus
+        ]
+        if keyword:                          #checks for empty string
+            pipeline.append(                 #if keyword is present, filters items whose name field contains the keyword
+                {"$match": {"menuItem.name": {"$regex": keyword, "$options": "i"}}} #options makes it case-insensitive
+            )
+        pipeline.append({"$project": {       #parameters to select fields
+            "name": "$menuItem.name",        #all of these tell mangodb to output the field and pull the value from the db
+            "price": "$menuItem.price",
+            "description": "$menuItem.description",
+            "inStock": "$menuItem.inStock",
+            "allergens": "$menuItem.allergens",
+        }})
+        """
                                                 
         items = self.server.search_menu_items(menu_type=self.type, keyword=keyword or None) #changed to call server.py
         if not items:
