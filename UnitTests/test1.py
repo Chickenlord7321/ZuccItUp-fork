@@ -1021,6 +1021,55 @@ class TestEnums(unittest.TestCase):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  AGENT.py TESTS
+# ══════════════════════════════════════════════════════════════════════════════
+
+#import must be checked
+from agent import (
+    _view_notifications,
+    _send_status_notification,
+    _accept_order,
+    _mark_complete,
+    _view_pending_orders,
+    _view_order_history,
+    _set_availability,
+    _get_pending_orders,
+    _print_order_table
+)
+
+#Creates a mock agent for testing
+def make_mock_agent(name="Test Agent", viuid="123456789", available=True):
+    """Helper to create mock DeliveryAgent"""
+    from user import DeliveryAgent  #in user.py there is class DeliveryAgent(user) might need to change import
+    agent = DeliveryAgent(          #I think it src.user fixes the squiggles but the tests above have them and they run fine
+        availibilityStatus=available,
+        VIUID=viuid,
+        name=name,
+        email=f"{viuid}@viu.ca",
+        role="Agent"
+    )
+    return agent
+
+class TestNotification(unittest.TestCase):
+    """Tests for notification functions"""
+
+    def test_view_notifications_creates_notification_with_agent_name(self, mock_notif_class):
+        """Test view_notifications creates Notification with agent's name"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        
+        _view_notifications(agent, mock_server)
+        
+        # Verify Notification was created with agent's name as customer_VIUID
+        mock_notif_class.assert_called_once()
+        call_kwargs = mock_notif_class.call_args[1]
+        self.assertEqual(call_kwargs["customer_VIUID"], "John Doe")
+        self.assertEqual(call_kwargs["server"], mock_server)
+
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
