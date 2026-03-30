@@ -4,6 +4,7 @@ from pymongo import MongoClient as MangoClient		# MangoDB Client
 from pymongo.errors import OperationFailure			# MongoDB exception class
 from bson.objectid import ObjectId					# for MangoDB _id
 import bcrypt										# for hashing and salting passwords
+from debug import DEBUG_MODE
 
 #See code plan in A6 document for details on each function
 
@@ -20,8 +21,8 @@ class Server:
 	"""
 	def __init__(self, user_id: str, passwd: str):
 		# DEBUG
-		# print("Username: " + user_id)
-		# print("Password: " + passwd)
+		print("Username: " + user_id)
+		print("Password: " + passwd)
 
 		# Name of the project you want to connect to, e.g. csci375a_project
 		self.__project = user_id + "_project"
@@ -30,13 +31,15 @@ class Server:
 		self.__uri = f"mongodb://{user_id}:{passwd}@studb-mongo.csci.viu.ca:27017/{self.__project}?authSource=admin"
 
 		# Create DB Client or throw an exception if the user ID or password is incorrect.
+		self.__client = MangoClient(self.__uri)
+		self.__db = self.__client.get_database(self.__project)
 		try:
-			self.__client = MangoClient(self.__uri)
-			self.__db = self.__client.get_database(self.__project)
 			# Ping the database to check that username and password are actually correct
 			self.__db.command("ping")
-		except OperationFailure:
-			# Username and/or password were NOT correct
+		except Exception as e:		# Username and/or password were NOT correct
+			if DEBUG_MODE:
+				print("Pymongo error is:")
+				print(e)
 			raise ValueError("Could not connect to MongoDB: username or password was incorrect")
 		else:
 			# Get collections as private attributes
