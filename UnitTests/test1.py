@@ -1090,6 +1090,27 @@ class TestNotification(unittest.TestCase):
         
         mock_instance.viewNotification.assert_called_once()
 
+    @patch('agent.Notification')
+    def test_send_status_notification_creates_with_order_id(self, mock_notif_class):
+        """Test send_status_notification includes order_id"""
+        mock_server = make_mock_server_instance()
+        
+        _send_status_notification("order123", "customer_name", mock_server)
+        
+        call_kwargs = mock_notif_class.call_args[1]
+        self.assertEqual(call_kwargs["order_id"], "order123")
+        self.assertEqual(call_kwargs["customer_VIUID"], "customer_name")
+
+    @patch('agent.Notification')
+    def test_send_status_notification_calls_sendNotification(self, mock_notif_class):
+        """Test send_status_notification calls sendNotification method"""
+        mock_server = make_mock_server_instance()
+        mock_instance = MagicMock()
+        mock_notif_class.return_value = mock_instance
+        
+        _send_status_notification("order123", "customer_name", mock_server)
+        
+        mock_instance.sendNotification.assert_called_once()
 # ══════════════════════════════════════════════════════════════════════════════
 
 
