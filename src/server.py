@@ -1,8 +1,10 @@
 # Authors: Caleb, Keenan
 from datetime import datetime						# for handling times and dates
 from pymongo import MongoClient as MangoClient		# MangoDB Client
+from pymongo.errors import OperationFailure			# MongoDB exception class
 from bson.objectid import ObjectId					# for MangoDB _id
 import bcrypt										# for hashing and salting passwords
+from debug import DEBUG_MODE
 
 #See code plan in A6 document for details on each function
 
@@ -19,8 +21,8 @@ class Server:
 	"""
 	def __init__(self, user_id: str, passwd: str):
 		# DEBUG
-		# print("Username: " + user_id)
-		# print("Password: " + passwd)
+		print("Username: " + user_id)
+		print("Password: " + passwd)
 
 		# Name of the project you want to connect to, e.g. csci375a_project
 		self.__project = user_id + "_project"
@@ -29,13 +31,15 @@ class Server:
 		self.__uri = f"mongodb://{user_id}:{passwd}@studb-mongo.csci.viu.ca:27017/{self.__project}?authSource=admin"
 
 		# Create DB Client or throw an exception if the user ID or password is incorrect.
+		self.__client = MangoClient(self.__uri)
+		self.__db = self.__client.get_database(self.__project)
 		try:
-			self.__client = MangoClient(self.__uri)
-			self.__db = self.__client.get_database(self.__project)
 			# Ping the database to check that username and password are actually correct
 			self.__db.command("ping")
-		except Exception:
-			# Username and/or password were NOT correct
+		except Exception as e:		# Username and/or password were NOT correct
+			if DEBUG_MODE:
+				print("Pymongo error is:")
+				print(e)
 			raise ValueError("Could not connect to MongoDB: username or password was incorrect")
 		else:
 			# Get collections as private attributes
@@ -292,7 +296,7 @@ class Server:
 		"""
 		Creates a new order document and sets all the properties named in the parameter list:
 		:param building: A 3-digit string number between 100 and 499
-		:param room: A 3- or 4-digit string number between 100 and 599 (the 4th optional digit is a letter, e.g. '315a')
+		:param room: A 3- or 4-digit string number between 100 and 599 (the 4th optional digit is a letter, e.g. '215a')
 		:param subtotal: The subtotal cost of the order
 		:param instructions: Any special instructions given by the user (leave as empty string if none)
 		:param customer: The VIU ID of the customer
@@ -310,7 +314,6 @@ class Server:
 			"cartItem": cart,
 			"orderStatus": "Pending",
 			"orderTime": datetime.now(),
-   
 			"readyTime": None,
 			"acceptTime": None,
 			"pickupTime": None,

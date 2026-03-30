@@ -1,4 +1,6 @@
 bcrypt==5.0.0
 dnspython==2.8.0
+prettytable==3.17.0
 pymongo==4.16.0
+wcwidth==0.6.0
 pytest==8.3.4

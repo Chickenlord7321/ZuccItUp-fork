@@ -8,13 +8,13 @@ from bson.o
 
 
 class Cart:
-	def __init__(self, building: str, room: str):
+	def __init__(self, building: str, room: str, server):
 		# You can declare private attributes using double underscores (__)
 		# before the name of the variable
 		self.__building = building
 		self.__room = room
 		self.__subtotal = 0.0
-
+		self.__server = server
 		# Format of cart items:
 		# {
 		#   "menuItemID": quantity (int),
@@ -138,7 +138,7 @@ class Cart:
 	def num_items(self) -> int:
 		return len(self.__cart_items)					#!!!!!!!!!!!!!!!!Bruce did not write this, please comment this!!!!!!!!!!!!!
 
-	def convert_to_orders(self):
+	def convert_to_orders(self, customer:str, vendor:str, instructions: str = ""):
 
 		if not self.__cart_items:
 			print("Cannot place an empty order.")		#again, calling this with an empty cart means you need to seek psyciatric help(i cannot spell)
@@ -197,7 +197,7 @@ class Status(Enum):
 
 
 class Order:
-	def __init__(self, svr: Server, building: str, room: str, total: float, instructions: str, customer: str, vendor: str):
+	def __init__(self, svr: Server, building: str, room: str, total: float, instructions: str, customer: str, vendor: str, server):
 		self.__server = svr
 		self.__building = building
 		self.__room = room
@@ -205,6 +205,7 @@ class Order:
 		self.__special_instructions = instructions
 		self.__customer = customer
 		self.__vendor = vendor
+		self.__server = server
 		self.__agent = ""
 		self.__order_id = ""
 		self.__order_status = ""
