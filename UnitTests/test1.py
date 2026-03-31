@@ -1402,6 +1402,113 @@ class TestAcceptOrder(unittest.TestCase):
         
         mock_send.assert_called_once_with("order123", "Alice", mock_server)
 
+# ── MARK COMPLETE TESTS ───────────────────────────────────────────────────────
+
+class TestMarkComplete(unittest.TestCase):
+    """Tests for _mark_complete"""
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('builtins.input', return_value='')
+    @patch('builtins.print')
+    def test_mark_complete_shows_message_when_no_active_deliveries(self, mock_print, 
+                                                                    mock_input, mock_order, mock_send):
+        """Test shows message when agent has no active deliveries"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        mock_order_instance = MagicMock()
+        mock_order_instance.view_all_orders.return_value = [
+            {"agent": "Other Agent", "orderStatus": "In Transit"}
+        ]
+        mock_order.return_value = mock_order_instance
+        
+        _mark_complete(agent, mock_server)
+        
+        printed = [str(c) for c in mock_print.call_args_list]
+        message_found = any("no active deliveries" in str(c).lower() for c in printed)
+        self.assertTrue(message_found)
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('builtins.input', return_value='')
+    def test_mark_complete_returns_when_user_cancels(self, mock_input, mock_order, mock_send):
+        """Test returns without action when user presses Enter"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        mock_order_instance = MagicMock()
+        mock_order_instance.view_all_orders.return_value = [
+            {"_id": "1", "agent": "John Doe", "orderStatus": "In Transit"}
+        ]
+        mock_order.return_value = mock_order_instance
+        
+        _mark_complete(agent, mock_server)
+        
+        mock_send.assert_not_called()
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('agent._print_order_table')
+    @patch('builtins.input', return_value='1')
+    def test_mark_complete_calls_order_mark_complete_method(self, mock_input, 
+                                                            mock_table, mock_order_class, mock_send):
+        """Test calls order.mark_complete()"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        fake_order = {
+            "_id": "order123",
+            "agent": "John Doe",
+            "orderStatus": "In Transit",
+            "building": "200",
+            "room": "101",
+            "subTotal": 15.50,
+            "specialInstructions": "",
+            "customer": "Alice",
+            "vendor": "Upper Cafe"
+        }
+        
+        # First call creates temp Order for view_all
+        # Second call creates actual Order for mark_complete
+        first_instance = MagicMock()
+        first_instance.view_all_orders.return_value = [fake_order]
+        second_instance = MagicMock()
+        mock_order_class.side_effect = [first_instance, second_instance]
+        
+        _mark_complete(agent, mock_server)
+        
+        second_instance.mark_complete.assert_called_once()
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('agent._print_order_table')
+    @patch('builtins.input', return_value='1')
+    def test_mark_complete_sends_notification_to_customer(self, mock_input, mock_table,
+                                                          mock_order_class, mock_send):
+        """Test sends notification after marking complete"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        fake_order = {
+            "_id": "order123",
+            "agent": "John Doe",
+            "orderStatus": "In Transit",
+            "customer": "Alice",
+            "building": "200",
+            "room": "101",
+            "subTotal": 15.50,
+            "specialInstructions": "",
+            "vendor": "Upper Cafe"
+        }
+        
+        first_instance = MagicMock()
+        first_instance.view_all_orders.return_value = [fake_order]
+        second_instance = MagicMock()
+        mock_order_class.side_effect = [first_instance, second_instance]
+        
+        _mark_complete(agent, mock_server)
+        
+        mock_send.assert_called_once_with("order123", "Alice", mock_server)
+
+# ──  TESTS ───────────────────────────────────────────────────────
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
