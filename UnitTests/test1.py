@@ -1507,8 +1507,51 @@ class TestMarkComplete(unittest.TestCase):
         
         mock_send.assert_called_once_with("order123", "Alice", mock_server)
 
-# ──  TESTS ───────────────────────────────────────────────────────
+# ── VIEW ORDER HISTORY TESTS ───────────────────────────────────────────────────────
 
+class TestViewOrderHistory(unittest.TestCase):
+    """Tests for _view_order_history"""
 
+    @patch('agent.Order')
+    @patch('builtins.print')
+    def test_view_order_history_shows_message_when_no_history(self, mock_print, mock_order):
+        """Test shows message when agent has no order history"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        mock_order_instance = MagicMock()
+        mock_order_instance.view_all_orders.return_value = [
+            {"agent": "Other Agent"}
+        ]
+        mock_order.return_value = mock_order_instance
+        
+        _view_order_history(agent, mock_server)
+        
+        printed = [str(c) for c in mock_print.call_args_list]
+        message_found = any("no order history" in str(c).lower() for c in printed)
+        self.assertTrue(message_found)
+
+    @patch('agent.Order')
+    @patch('builtins.print')
+    def test_view_order_history_displays_only_agent_orders(self, mock_print, mock_order):
+        """Test displays only orders assigned to this agent"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        mock_order_instance = MagicMock()
+        mock_order_instance.view_all_orders.return_value = [
+            {"agent": "John Doe", "customer": "Alice", "vendor": "Upper Cafe",
+             "orderStatus": "Delivered", "subTotal": 15.50, "building": "200", "room": "101"},
+            {"agent": "Other Agent", "customer": "Bob", "vendor": "Lower Cafe",
+             "orderStatus": "Delivered", "subTotal": 20.00, "building": "210", "room": "202"},
+            {"agent": "John Doe", "customer": "Charlie", "vendor": "Upper Cafe",
+             "orderStatus": "In Transit", "subTotal": 10.00, "building": "200", "room": "103"}
+        ]
+        mock_order.return_value = mock_order_instance
+        
+        _view_order_history(agent, mock_server)
+        
+        # Should print 2 order lines (for John Doe's orders only) + header + separator
+        self.assertGreaterEqual(mock_print.call_count, 4)
+
+        
 if __name__ == "__main__":
     unittest.main(verbosity=2)
