@@ -796,16 +796,17 @@ class TestOrder(unittest.TestCase):
         if mock_server is None:
             mock_server = make_mock_server_instance()
         # [BUG-2] 'svr' is overwritten by 'server' — we pass same mock for both
-        return Order(
-            svr=mock_server,
-            building="200",
-            room="315",
-            total=12.50,
-            instructions="Extra hot",
-            customer="111111111",
-            vendor="Upper Cafe",
-            server=mock_server,
-        ), mock_server
+        order = Order(
+            mock_server,     # svr
+            "200",           # building
+            "315",           # room
+            12.50,           # total
+            "Extra hot",     # instructions
+            "111111111",     # customer
+            "Upper Cafe"     # vendor
+        )
+        return order, mock_server
+
 
     # ── __init__ / getters ────────────────────────────────────────────────────
 
@@ -1021,6 +1022,597 @@ class TestEnums(unittest.TestCase):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  AGENT.py TESTS
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── NOTIFICATION TESTS ───────────────────────────────────────────────────────
+
+#import must be checked
+from agent import (
+    _view_notifications,
+    _send_status_notification,
+    _accept_order,
+    _mark_complete,
+    _view_pending_orders,
+    _view_order_history,
+    _set_availability,
+    _get_pending_orders,
+    _print_order_table
+)
+from user import User, DeliveryAgent
+
+#Creates a mock agent for testing
+"""
+def make_mock_agent(name="John Doe", viu_id="123456789", email="john@viu.ca"):
+    mock_server = make_mock_server_instance()
+
+    # Create a base User object
+    user = User(mock_server)
+
+    # Inject attributes normally set during login/signup
+    user._User__current_user = viu_id
+    user._User__role = "Agent"
+    user.name = name
+    user.email = email
+    user.VIUID = viu_id
+
+    # Create DeliveryAgent from the User object (shallow copy path)
+    agent = DeliveryAgent(mock_server, user)
+
+    # Also inject availability if needed
+    agent._DeliveryAgent__availability_status = True
+
+    return agent """
+
+def make_mock_agent(
+    name="John Doe",
+    viu_id="123456789",
+    email="john@viu.ca",
+    availability=True
+):
+    mock_server = make_mock_server_instance()
+
+    # Create a base User
+    user = User(mock_server)
+    user._User__current_user = viu_id
+    user._User__role = "Agent"
+
+    # Public attributes used in agent.py
+    user.name = name
+    user.email = email
+    user.VIUID = viu_id
+
+    # Create DeliveryAgent via shallow-copy constructor
+    agent = DeliveryAgent(mock_server, user)
+
+    # Private attribute (real storage)
+    agent._DeliveryAgent__availability_status = availability
+
+    # Public attribute used by setAvailability() and _set_availability()
+    agent.availabilityStatus = availability
+
+    return agent
+
+
+
+
+class TestNotification(unittest.TestCase):
+    """Tests for notification functions"""
+
+    @patch('agent.Notification')
+    def test_view_notifications_creates_notification_with_agent_name(self, mock_notif_class):
+        """Test view_notifications creates Notification with agent's name"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        
+        _view_notifications(agent, mock_server)
+        
+        # Verify Notification was created with agent's name as customer_VIUID
+        mock_notif_class.assert_called_once()
+        call_kwargs = mock_notif_class.call_args[1]
+        self.assertEqual(call_kwargs["customer_VIUID"], "John Doe")
+        self.assertEqual(call_kwargs["server"], mock_server)
+
+    @patch('agent.Notification')
+    def test_view_notifications_calls_viewNotification(self, mock_notif_class):
+        """Test view_notifications calls viewNotification method"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent()
+        mock_instance = MagicMock()
+        mock_notif_class.return_value = mock_instance
+        
+        _view_notifications(agent, mock_server)
+        
+        mock_instance.viewNotification.assert_called_once()
+
+    @patch('agent.Notification')
+    def test_send_status_notification_creates_with_order_id(self, mock_notif_class):
+        """Test send_status_notification includes order_id"""
+        mock_server = make_mock_server_instance()
+        
+        _send_status_notification("order123", "customer_name", mock_server)
+        
+        call_kwargs = mock_notif_class.call_args[1]
+        self.assertEqual(call_kwargs["order_id"], "order123")
+        self.assertEqual(call_kwargs["customer_VIUID"], "customer_name")
+
+    @patch('agent.Notification')
+    def test_send_status_notification_calls_sendNotification(self, mock_notif_class):
+        """Test send_status_notification calls sendNotification method"""
+        mock_server = make_mock_server_instance()
+        mock_instance = MagicMock()
+        mock_notif_class.return_value = mock_instance
+        
+        _send_status_notification("order123", "customer_name", mock_server)
+        
+        mock_instance.sendNotification.assert_called_once()
+
+# ── PENDING ORDER TESTS ───────────────────────────────────────────────────────
+
+#Commented out till error is addressed
+#error in order init addressed now testing if change worked/helped
+class TestGetPendingOrders(unittest.TestCase):
+    #Tests for _get_pending_orders helper
+
+    def test_get_pending_orders_returns_empty_when_none(self):
+        #Test returns empty list when no orders
+        mock_server = make_mock_server_instance()
+        mock_server.get_all_orders.return_value = []
+        
+        result = _get_pending_orders(mock_server)  #throws error with second definition of server in order __init__
+        
+        self.assertEqual(result, [])
+
+    def test_get_pending_orders_filters_only_pending(self):
+        #Test only returns orders with 'Pending' status
+        mock_server = make_mock_server_instance()
+        mock_server.get_all_orders.return_value = [
+            {"_id": "1", "orderStatus": "Pending", "customer": "Alice"},
+            {"_id": "2", "orderStatus": "In Transit", "customer": "Bob"},
+            {"_id": "3", "orderStatus": "Pending", "customer": "Charlie"},
+            {"_id": "4", "orderStatus": "Delivered", "customer": "Dave"}
+        ]
+        
+        result = _get_pending_orders(mock_server)
+        
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["customer"], "Alice")
+        self.assertEqual(result[1]["customer"], "Charlie")
+
+    def test_get_pending_orders_calls_server_get_all_orders(self):
+        #Test calls server.get_all_orders
+        mock_server = make_mock_server_instance()
+        mock_server.get_all_orders.return_value = []
+        
+        _get_pending_orders(mock_server)
+        
+        mock_server.get_all_orders.assert_called_once() 
+
+
+# ── PRINT ORDER TABLE TESTS ───────────────────────────────────────────────────────
+
+class TestPrintOrderTable(unittest.TestCase):
+    """Tests for _print_order_table helper"""
+
+    @patch('builtins.print')
+    def test_print_order_table_with_subtotal_shows_correct_columns(self, mock_print):
+        """Test prints subtotal column when show_subtotal=True"""
+        orders = [
+            {"customer": "Alice", "vendor": "Upper Cafe", "building": "200", 
+             "room": "101", "subTotal": 15.50}
+        ]
+        
+        _print_order_table(orders, show_subtotal=True)
+        
+        # Check header contains "Subtotal"
+        calls = [str(c) for c in mock_print.call_args_list]
+        header_printed = any("Subtotal" in str(c) for c in calls)
+        self.assertTrue(header_printed)
+
+    @patch('builtins.print')
+    def test_print_order_table_without_subtotal_hides_column(self, mock_print):
+        """Test hides subtotal column when show_subtotal=False"""
+        orders = [
+            {"customer": "Alice", "vendor": "Upper Cafe", "building": "200", 
+             "room": "101"}
+        ]
+        
+        _print_order_table(orders, show_subtotal=False)
+        
+        # Check header does NOT contain "Subtotal"
+        calls = [str(c) for c in mock_print.call_args_list]
+        header_printed = any("Subtotal" in str(c) for c in calls)
+        self.assertFalse(header_printed)
+
+    @patch('builtins.print')
+    def test_print_order_table_prints_all_orders(self, mock_print):
+        """Test prints all orders in list"""
+        orders = [
+            {"customer": "Alice", "vendor": "Upper Cafe", "building": "200", 
+             "room": "101", "subTotal": 15.50},
+            {"customer": "Bob", "vendor": "Lower Cafe", "building": "210", 
+             "room": "202", "subTotal": 20.00}
+        ]
+        
+        _print_order_table(orders)
+        
+        # Should print at least 4 lines (header + separator + 2 orders)
+        self.assertGreaterEqual(mock_print.call_count, 4)
+
+# ── VIEW PENDING ORDERS TESTS ───────────────────────────────────────────────────────
+
+class TestViewPendingOrders(unittest.TestCase):
+    
+    #"""Tests for _view_pending_orders"""
+
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    def test_view_pending_orders_shows_message_when_none(self, mock_get, mock_print_table):
+        #"""Test prints message when no pending orders"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent()
+        mock_get.return_value = []
+        
+        with patch('builtins.print') as mock_print:
+            _view_pending_orders(agent, mock_server)
+            
+            # Check for "No pending orders" message
+            printed = [str(c) for c in mock_print.call_args_list]
+            message_found = any("No pending orders" in str(c) for c in printed)
+            self.assertTrue(message_found)
+
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    def test_view_pending_orders_displays_table_when_orders_exist(self, mock_get, mock_print_table):
+        #Test displays table when pending orders exist"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent()
+        fake_orders = [{"_id": "1", "orderStatus": "Pending"}]
+        mock_get.return_value = fake_orders
+        
+        _view_pending_orders(agent, mock_server)
+        
+        mock_print_table.assert_called_once_with(fake_orders)
+
+# ── SET AVAILABILITY TESTS ───────────────────────────────────────────────────────
+
+class TestSetAvailability(unittest.TestCase):
+    """Tests for _set_availability"""
+
+    @patch('builtins.input', return_value='n')
+    @patch('builtins.print')
+    def test_set_availability_no_change_when_user_declines(self, mock_print, mock_input):
+        """Test doesn't change status when user enters 'n'"""
+        agent = make_mock_agent(availability=True)
+        agent.setAvailability = MagicMock()
+        
+        _set_availability(agent)
+        
+        agent.setAvailability.assert_not_called()
+
+    @patch('builtins.input', return_value='y')
+    def test_set_availability_toggles_when_user_confirms(self, mock_input):
+        """Test toggles availability when user enters 'y'"""
+        agent = make_mock_agent(availability=True)
+        agent.setAvailability = MagicMock()
+        
+        _set_availability(agent)
+        
+        agent.setAvailability.assert_called_once_with(False)
+
+    @patch('builtins.input', return_value='y')
+    def test_set_availability_toggles_from_false_to_true(self, mock_input):
+        """Test toggles from unavailable to available"""
+        agent = make_mock_agent(availability=False)
+        agent.setAvailability = MagicMock()
+        
+        _set_availability(agent)
+        
+        agent.setAvailability.assert_called_once_with(True)
+
+# ── ACCEPT ORDER TESTS ───────────────────────────────────────────────────────
+
+class TestAcceptOrder(unittest.TestCase):
+    """Tests for _accept_order"""
+
+    @patch('agent._send_status_notification')
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    @patch('builtins.input', return_value='')
+    def test_accept_order_does_nothing_when_user_cancels(self, mock_input, mock_get, 
+                                                          mock_print, mock_send):
+        """Test returns without action when user presses Enter"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent()
+        mock_get.return_value = [{"_id": "1", "orderStatus": "Pending"}]
+        
+        _accept_order(agent, mock_server)
+        
+        mock_send.assert_not_called()
+
+    @patch('agent._send_status_notification')
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    @patch('builtins.input', return_value='abc')
+    @patch('builtins.print')
+    def test_accept_order_rejects_non_numeric_input(self, mock_print, mock_input, 
+                                                     mock_get, mock_table, mock_send):
+        """Test shows error for non-numeric input"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent()
+        mock_get.return_value = [{"_id": "1", "orderStatus": "Pending"}]
+        
+        _accept_order(agent, mock_server)
+        
+        # Check for "Invalid selection" message
+        printed = [str(c) for c in mock_print.call_args_list]
+        error_found = any("Invalid" in str(c) for c in printed)
+        self.assertTrue(error_found)
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    @patch('builtins.input', return_value='1')
+    def test_accept_order_calls_order_accept_method(self, mock_input, mock_get, 
+                                                     mock_table, mock_order_class, mock_send):
+        """Test calls order.accept_order() with agent name"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        fake_order = {
+            "_id": "order123",
+            "building": "200",
+            "room": "101",
+            "subTotal": 15.50,
+            "specialInstructions": "Extra hot",
+            "customer": "Alice",
+            "vendor": "Upper Cafe",
+            "orderStatus": "Pending"
+        }
+        mock_get.return_value = [fake_order]
+        mock_order_instance = MagicMock()
+        mock_order_class.return_value = mock_order_instance
+        
+        _accept_order(agent, mock_server)
+        
+        mock_order_instance.accept_order.assert_called_once_with("John Doe")
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    @patch('builtins.input', return_value='1')
+    def test_accept_order_sends_notification_to_customer(self, mock_input, mock_get,
+                                                         mock_table, mock_order, mock_send):
+        """Test sends status notification to customer after accepting"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent()
+        fake_order = {
+            "_id": "order123",
+            "customer": "Alice",
+            "building": "200",
+            "room": "101",
+            "subTotal": 15.50,
+            "specialInstructions": "",
+            "vendor": "Upper Cafe",
+            "orderStatus": "Pending"
+        }
+        mock_get.return_value = [fake_order]
+        
+        _accept_order(agent, mock_server)
+        
+        mock_send.assert_called_once_with("order123", "Alice", mock_server)
+
+# ── MARK COMPLETE TESTS ───────────────────────────────────────────────────────
+
+class TestMarkComplete(unittest.TestCase):
+    """Tests for _mark_complete"""
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('builtins.input', return_value='')
+    @patch('builtins.print')
+    def test_mark_complete_shows_message_when_no_active_deliveries(self, mock_print, 
+                                                                    mock_input, mock_order, mock_send):
+        """Test shows message when agent has no active deliveries"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        mock_order_instance = MagicMock()
+        mock_order_instance.view_all_orders.return_value = [
+            {"agent": "Other Agent", "orderStatus": "In Transit"}
+        ]
+        mock_order.return_value = mock_order_instance
+        
+        _mark_complete(agent, mock_server)
+        
+        printed = [str(c) for c in mock_print.call_args_list]
+        message_found = any("no active deliveries" in str(c).lower() for c in printed)
+        self.assertTrue(message_found)
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('builtins.input', return_value='')
+    def test_mark_complete_returns_when_user_cancels(self, mock_input, mock_order, mock_send):
+        """Test returns without action when user presses Enter"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        mock_order_instance = MagicMock()
+        mock_order_instance.view_all_orders.return_value = [
+            {"_id": "1", "agent": "John Doe", "orderStatus": "In Transit"}
+        ]
+        mock_order.return_value = mock_order_instance
+        
+        _mark_complete(agent, mock_server)
+        
+        mock_send.assert_not_called()
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('agent._print_order_table')
+    @patch('builtins.input', return_value='1')
+    def test_mark_complete_calls_order_mark_complete_method(self, mock_input, 
+                                                            mock_table, mock_order_class, mock_send):
+        """Test calls order.mark_complete()"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        fake_order = {
+            "_id": "order123",
+            "agent": "John Doe",
+            "orderStatus": "In Transit",
+            "building": "200",
+            "room": "101",
+            "subTotal": 15.50,
+            "specialInstructions": "",
+            "customer": "Alice",
+            "vendor": "Upper Cafe"
+        }
+        
+        # First call creates temp Order for view_all
+        # Second call creates actual Order for mark_complete
+        first_instance = MagicMock()
+        first_instance.view_all_orders.return_value = [fake_order]
+        second_instance = MagicMock()
+        mock_order_class.side_effect = [first_instance, second_instance]
+        
+        _mark_complete(agent, mock_server)
+        
+        second_instance.mark_complete.assert_called_once()
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('agent._print_order_table')
+    @patch('builtins.input', return_value='1')
+    def test_mark_complete_sends_notification_to_customer(self, mock_input, mock_table,
+                                                          mock_order_class, mock_send):
+        """Test sends notification after marking complete"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        fake_order = {
+            "_id": "order123",
+            "agent": "John Doe",
+            "orderStatus": "In Transit",
+            "customer": "Alice",
+            "building": "200",
+            "room": "101",
+            "subTotal": 15.50,
+            "specialInstructions": "",
+            "vendor": "Upper Cafe"
+        }
+        
+        first_instance = MagicMock()
+        first_instance.view_all_orders.return_value = [fake_order]
+        second_instance = MagicMock()
+        mock_order_class.side_effect = [first_instance, second_instance]
+        
+        _mark_complete(agent, mock_server)
+        
+        mock_send.assert_called_once_with("order123", "Alice", mock_server)
+
+# ── VIEW ORDER HISTORY TESTS ───────────────────────────────────────────────────────
+
+class TestViewOrderHistory(unittest.TestCase):
+    """Tests for _view_order_history"""
+
+    @patch('agent.Order')
+    @patch('builtins.print')
+    def test_view_order_history_shows_message_when_no_history(self, mock_print, mock_order):
+        """Test shows message when agent has no order history"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        mock_order_instance = MagicMock()
+        mock_order_instance.view_all_orders.return_value = [
+            {"agent": "Other Agent"}
+        ]
+        mock_order.return_value = mock_order_instance
+        
+        _view_order_history(agent, mock_server)
+        
+        printed = [str(c) for c in mock_print.call_args_list]
+        message_found = any("no order history" in str(c).lower() for c in printed)
+        self.assertTrue(message_found)
+
+    @patch('agent.Order')
+    @patch('builtins.print')
+    def test_view_order_history_displays_only_agent_orders(self, mock_print, mock_order):
+        """Test displays only orders assigned to this agent"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        mock_order_instance = MagicMock()
+        mock_order_instance.view_all_orders.return_value = [
+            {"agent": "John Doe", "customer": "Alice", "vendor": "Upper Cafe",
+             "orderStatus": "Delivered", "subTotal": 15.50, "building": "200", "room": "101"},
+            {"agent": "Other Agent", "customer": "Bob", "vendor": "Lower Cafe",
+             "orderStatus": "Delivered", "subTotal": 20.00, "building": "210", "room": "202"},
+            {"agent": "John Doe", "customer": "Charlie", "vendor": "Upper Cafe",
+             "orderStatus": "In Transit", "subTotal": 10.00, "building": "200", "room": "103"}
+        ]
+        mock_order.return_value = mock_order_instance
+        
+        _view_order_history(agent, mock_server)
+        
+        # Should print 2 order lines (for John Doe's orders only) + header + separator
+        self.assertGreaterEqual(mock_print.call_count, 4)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  CUSTOMER.py TESTS
+# ══════════════════════════════════════════════════════════════════════════════
+def make_mock_customer(name="Test Customer", viuid="123456789"):
+    from user import User, Customer
+
+    mock_server = MagicMock()
+
+    # Create a base User object
+    user = User(mock_server)
+    user.name = name
+    user.VIUID = viuid
+    user.email = f"{viuid}@viu.ca"
+    user._User__role = "Customer"
+
+    # Create Customer as a shallow copy of User
+    customer = Customer(mock_server, user)
+
+    customer.previouslyOrdered = []
+    return customer
+
+
+
+def make_mock_cart(building="200", room="101"):
+    """Helper to create mock Cart"""
+    mock_cart = MagicMock()
+    mock_cart.num_items.return_value = 0
+    mock_cart.get_location.return_value = (building, room)
+    mock_cart.calculate_subtotal.return_value = 0.0
+    return mock_cart
+
+# ── NOTIFICATION  TESTS ───────────────────────────────────────────────────────
+
+class TestNotifications(unittest.TestCase):
+    """Tests for notification functions"""
+
+    @patch('customer.Notification')
+    def test_view_notifications_creates_notification_with_customer_name(self, mock_notif_class):
+        """Test creates Notification with customer's name"""
+        mock_server = make_mock_server_instance()
+        customer = make_mock_customer(name="Alice")
+        
+        _view_notifications(customer, mock_server)
+        
+        call_kwargs = mock_notif_class.call_args[1]
+        self.assertEqual(call_kwargs["customer_VIUID"], "Alice")
+        self.assertEqual(call_kwargs["server"], mock_server)
+
+    @patch('customer.Notification')
+    def test_view_notifications_calls_viewNotification(self, mock_notif_class):
+        """Test calls viewNotification method"""
+        mock_server = make_mock_server_instance()
+        customer = make_mock_customer()
+        mock_instance = MagicMock()
+        mock_notif_class.return_value = mock_instance
+        
+        _view_notifications(customer, mock_server)
+        
+        mock_instance.viewNotification.assert_called_once()
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -19,7 +19,7 @@ def agent_main(server):
  
     #build temporary agent just to call verifyVIUID
     temp = DeliveryAgent(
-        availibilityStatus=False,
+        availabilityStatus=False,
         VIUID=viuid,
         name="",
         email="",
@@ -37,7 +37,7 @@ def agent_main(server):
         return
     #now build actual user object with full info
     agent = DeliveryAgent(
-        availibilityStatus=user_data.get("availabilityStatus", False),
+        availabilityStatus=user_data.get("availabilityStatus", False),
         VIUID=user_data["VIUID"],
         name=user_data["name"],
         email=user_data["email"],
@@ -45,7 +45,7 @@ def agent_main(server):
     )
     agent.server = server
  
-    status_label = "Available" if agent.availibilityStatus else "Unavailable"
+    status_label = "Available" if agent.availabilityStatus else "Unavailable"
     print(f"\nWelcome, {agent.name}!  ({status_label})")
  
     # ── Menu loop ──────────────────────────────────────────────────
@@ -247,25 +247,43 @@ def _view_order_history(agent: DeliveryAgent, server):
             f"{loc}"
         )
 
-def _set_availability(agent: DeliveryAgent):
+def _set_availability(agent: DeliveryAgent):  #Logic change by KW added != "y" and added last 2 lines and changed current assignment
     #change availability
-    current = "available" if agent.availibilityStatus else "unavailable"
-    print(f"\nYou are currently {current}.")
+    current = agent.availabilityStatus  # True or False
+    print(f"\nYou are currently  {'available' if current else 'unavailable'}.")
     choice = input("Change status? (y/n): ").strip().lower()
-    if choice == "y":
-        agent.setAvailability(not agent.availibilityStatus)
-        
-def _get_pending_orders(server) -> list:
+    if choice != "y":
+        print("Availability unchanged.")
+        return
+    new_status = not current
+    agent.setAvailability(new_status)
+
+
+        #Commented out by KW to try new function to conform with new order constructor
+"""def _get_pending_orders(server) -> list:
     #find any pending orders
     #create object for view_all
     temp = Order(
+
+        #server, #added by KW
         building="", room="", total=0.0,
         instructions="", customer="", vendor="",
-        server=server,
+        server=server,   #removed by KW
     )
     all_orders = temp.view_all_orders()
     #returns pending
-    return [o for o in all_orders if o.get("orderStatus") == "Pending"]
+    return [o for o in all_orders if o.get("orderStatus") == "Pending"]"""
+def _get_pending_orders(server) -> list:
+    """Return list of raw order dictionaries with status Pending."""
+    raw_orders = server.get_all_orders() or []
+    pending = []
+
+    for order in raw_orders:
+        if order.get("orderStatus") == "Pending":
+            pending.append(order)
+
+    return pending
+
 
 def _print_order_table(orders: list, show_subtotal: bool = True):
     #print table of specified orders
