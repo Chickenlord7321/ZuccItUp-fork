@@ -19,7 +19,7 @@ def agent_main(server):
  
     #build temporary agent just to call verifyVIUID
     temp = DeliveryAgent(
-        availibilityStatus=False,
+        availabilityStatus=False,
         VIUID=viuid,
         name="",
         email="",
@@ -37,7 +37,7 @@ def agent_main(server):
         return
     #now build actual user object with full info
     agent = DeliveryAgent(
-        availibilityStatus=user_data.get("availabilityStatus", False),
+        availabilityStatus=user_data.get("availabilityStatus", False),
         VIUID=user_data["VIUID"],
         name=user_data["name"],
         email=user_data["email"],
@@ -45,7 +45,7 @@ def agent_main(server):
     )
     agent.server = server
  
-    status_label = "Available" if agent.availibilityStatus else "Unavailable"
+    status_label = "Available" if agent.availabilityStatus else "Unavailable"
     print(f"\nWelcome, {agent.name}!  ({status_label})")
  
     # ── Menu loop ──────────────────────────────────────────────────
@@ -249,11 +249,11 @@ def _view_order_history(agent: DeliveryAgent, server):
 
 def _set_availability(agent: DeliveryAgent):
     #change availability
-    current = "available" if agent.availibilityStatus else "unavailable"
+    current = "available" if agent.availabilityStatus else "unavailable"
     print(f"\nYou are currently {current}.")
     choice = input("Change status? (y/n): ").strip().lower()
     if choice == "y":
-        agent.setAvailability(not agent.availibilityStatus)
+        agent.setAvailability(not agent.availabilityStatus)
         
 def _get_pending_orders(server) -> list:
     #find any pending orders
