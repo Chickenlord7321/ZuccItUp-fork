@@ -1149,7 +1149,7 @@ class TestNotification(unittest.TestCase):
 # ── PENDING ORDER TESTS ───────────────────────────────────────────────────────
 
 #Commented out till error is addressed
-""" 
+#error in order init addressed now testing if change worked/helped
 class TestGetPendingOrders(unittest.TestCase):
     #Tests for _get_pending_orders helper
 
@@ -1186,7 +1186,7 @@ class TestGetPendingOrders(unittest.TestCase):
         _get_pending_orders(mock_server)
         
         mock_server.get_all_orders.assert_called_once() 
-"""
+
 
 # ── PRINT ORDER TABLE TESTS ───────────────────────────────────────────────────────
 
@@ -1552,6 +1552,6 @@ class TestViewOrderHistory(unittest.TestCase):
         # Should print 2 order lines (for John Doe's orders only) + header + separator
         self.assertGreaterEqual(mock_print.call_count, 4)
 
-        
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
