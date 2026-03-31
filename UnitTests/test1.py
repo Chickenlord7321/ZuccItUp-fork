@@ -1309,6 +1309,99 @@ class TestSetAvailability(unittest.TestCase):
         
         agent.setAvailability.assert_called_once_with(True)
 
+# ── ACCEPT ORDER TESTS ───────────────────────────────────────────────────────
+
+class TestAcceptOrder(unittest.TestCase):
+    """Tests for _accept_order"""
+
+    @patch('agent._send_status_notification')
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    @patch('builtins.input', return_value='')
+    def test_accept_order_does_nothing_when_user_cancels(self, mock_input, mock_get, 
+                                                          mock_print, mock_send):
+        """Test returns without action when user presses Enter"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent()
+        mock_get.return_value = [{"_id": "1", "orderStatus": "Pending"}]
+        
+        _accept_order(agent, mock_server)
+        
+        mock_send.assert_not_called()
+
+    @patch('agent._send_status_notification')
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    @patch('builtins.input', return_value='abc')
+    @patch('builtins.print')
+    def test_accept_order_rejects_non_numeric_input(self, mock_print, mock_input, 
+                                                     mock_get, mock_table, mock_send):
+        """Test shows error for non-numeric input"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent()
+        mock_get.return_value = [{"_id": "1", "orderStatus": "Pending"}]
+        
+        _accept_order(agent, mock_server)
+        
+        # Check for "Invalid selection" message
+        printed = [str(c) for c in mock_print.call_args_list]
+        error_found = any("Invalid" in str(c) for c in printed)
+        self.assertTrue(error_found)
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    @patch('builtins.input', return_value='1')
+    def test_accept_order_calls_order_accept_method(self, mock_input, mock_get, 
+                                                     mock_table, mock_order_class, mock_send):
+        """Test calls order.accept_order() with agent name"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent(name="John Doe")
+        fake_order = {
+            "_id": "order123",
+            "building": "200",
+            "room": "101",
+            "subTotal": 15.50,
+            "specialInstructions": "Extra hot",
+            "customer": "Alice",
+            "vendor": "Upper Cafe",
+            "orderStatus": "Pending"
+        }
+        mock_get.return_value = [fake_order]
+        mock_order_instance = MagicMock()
+        mock_order_class.return_value = mock_order_instance
+        
+        _accept_order(agent, mock_server)
+        
+        mock_order_instance.accept_order.assert_called_once_with("John Doe")
+
+    @patch('agent._send_status_notification')
+    @patch('agent.Order')
+    @patch('agent._print_order_table')
+    @patch('agent._get_pending_orders')
+    @patch('builtins.input', return_value='1')
+    def test_accept_order_sends_notification_to_customer(self, mock_input, mock_get,
+                                                         mock_table, mock_order, mock_send):
+        """Test sends status notification to customer after accepting"""
+        mock_server = make_mock_server_instance()
+        agent = make_mock_agent()
+        fake_order = {
+            "_id": "order123",
+            "customer": "Alice",
+            "building": "200",
+            "room": "101",
+            "subTotal": 15.50,
+            "specialInstructions": "",
+            "vendor": "Upper Cafe",
+            "orderStatus": "Pending"
+        }
+        mock_get.return_value = [fake_order]
+        
+        _accept_order(agent, mock_server)
+        
+        mock_send.assert_called_once_with("order123", "Alice", mock_server)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
