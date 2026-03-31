@@ -1554,5 +1554,59 @@ class TestViewOrderHistory(unittest.TestCase):
         self.assertGreaterEqual(mock_print.call_count, 4)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  CUSTOMER.py TESTS
+# ══════════════════════════════════════════════════════════════════════════════
+def make_mock_customer(name="Test Customer", viuid="123456789"):
+    """Helper to create mock Customer"""
+    from user import Customer
+    customer = Customer(
+        VIUID=viuid,
+        name=name,
+        email=f"{viuid}@viu.ca",
+        role="Customer",
+        server=MagicMock()
+    )
+    customer.previouslyOrdered = []
+    return customer
+
+
+def make_mock_cart(building="200", room="101"):
+    """Helper to create mock Cart"""
+    mock_cart = MagicMock()
+    mock_cart.num_items.return_value = 0
+    mock_cart.get_location.return_value = (building, room)
+    mock_cart.calculate_subtotal.return_value = 0.0
+    return mock_cart
+
+# ── NOTIFICATION  TESTS ───────────────────────────────────────────────────────
+
+class TestNotifications(unittest.TestCase):
+    """Tests for notification functions"""
+
+    @patch('customer.Notification')
+    def test_view_notifications_creates_notification_with_customer_name(self, mock_notif_class):
+        """Test creates Notification with customer's name"""
+        mock_server = make_mock_server_instance()
+        customer = make_mock_customer(name="Alice")
+        
+        _view_notifications(customer, mock_server)
+        
+        call_kwargs = mock_notif_class.call_args[1]
+        self.assertEqual(call_kwargs["customer_VIUID"], "Alice")
+        self.assertEqual(call_kwargs["server"], mock_server)
+
+    @patch('customer.Notification')
+    def test_view_notifications_calls_viewNotification(self, mock_notif_class):
+        """Test calls viewNotification method"""
+        mock_server = make_mock_server_instance()
+        customer = make_mock_customer()
+        mock_instance = MagicMock()
+        mock_notif_class.return_value = mock_instance
+        
+        _view_notifications(customer, mock_server)
+        
+        mock_instance.viewNotification.assert_called_once()
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
