@@ -259,8 +259,8 @@ def _set_availability(agent: DeliveryAgent):  #Logic change by KW added != "y" a
     agent.setAvailability(new_status)
 
 
-        
-def _get_pending_orders(server) -> list:
+        #Commented out by KW to try new function to conform with new order constructor
+"""def _get_pending_orders(server) -> list:
     #find any pending orders
     #create object for view_all
     temp = Order(
@@ -272,7 +272,35 @@ def _get_pending_orders(server) -> list:
     )
     all_orders = temp.view_all_orders()
     #returns pending
-    return [o for o in all_orders if o.get("orderStatus") == "Pending"]
+    return [o for o in all_orders if o.get("orderStatus") == "Pending"]"""
+def _get_pending_orders(server) -> list:
+    """Return a list of Order objects for orders with status 'Pending'."""
+
+    raw_orders = server.get_all_orders() or []
+    pending = []
+
+    for order in raw_orders:
+        if order.get("orderStatus") != "Pending":
+            continue
+
+        # Build an Order object using your new constructor (7 positional args)
+        temp = Order(
+            server,                         # svr
+            order.get("building", ""),      # building
+            order.get("room", ""),          # room
+            order.get("subTotal", 0.0),     # total
+            order.get("specialInstructions", ""),  # instructions
+            order.get("customer", ""),      # customer
+            order.get("vendor", "")         # vendor
+        )
+
+        # Set the order ID AFTER construction (tests expect this)
+        temp._Order__order_id = order.get("_id", "")
+
+        pending.append(temp)
+
+    return pending
+
 
 def _print_order_table(orders: list, show_subtotal: bool = True):
     #print table of specified orders
