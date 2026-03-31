@@ -46,7 +46,7 @@ def agent_main(server):
     agent.server = server
  
     status_label = "Available" if agent.availabilityStatus else "Unavailable"
-    print(f"\nWelcome, {agent.name}!  ({status_label})")
+    print(f"\nWelcome, {agent.name}!  ({status_label})")  
  
     # ── Menu loop ──────────────────────────────────────────────────
     while True:
