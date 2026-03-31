@@ -1558,17 +1558,23 @@ class TestViewOrderHistory(unittest.TestCase):
 #  CUSTOMER.py TESTS
 # ══════════════════════════════════════════════════════════════════════════════
 def make_mock_customer(name="Test Customer", viuid="123456789"):
-    """Helper to create mock Customer"""
-    from user import Customer
-    customer = Customer(
-        VIUID=viuid,
-        name=name,
-        email=f"{viuid}@viu.ca",
-        role="Customer",
-        server=MagicMock()
-    )
+    from user import User, Customer
+
+    mock_server = MagicMock()
+
+    # Create a base User object
+    user = User(mock_server)
+    user.name = name
+    user.VIUID = viuid
+    user.email = f"{viuid}@viu.ca"
+    user._User__role = "Customer"
+
+    # Create Customer as a shallow copy of User
+    customer = Customer(mock_server, user)
+
     customer.previouslyOrdered = []
     return customer
+
 
 
 def make_mock_cart(building="200", room="101"):
