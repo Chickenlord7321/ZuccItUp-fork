@@ -20,9 +20,9 @@ class Server:
 	:param str passwd: the user's MongoDB password
 	"""
 	def __init__(self, user_id: str, passwd: str):
-		# DEBUG
-		print("Username: " + user_id)
-		print("Password: " + passwd)
+		if DEBUG_MODE:# DEBUG
+			print("Username: " + user_id)
+			print("Password: " + passwd)
 
 		# Name of the project you want to connect to, e.g. csci375a_project
 		self.__project = user_id + "_project"
