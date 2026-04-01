@@ -47,18 +47,6 @@ class Cart:
 		if quantity <= 0:
 			print("Quantity must be greater than 0.")	#avoiding troll inputs
 			return
-
-		"""
-		result = list(db.menu.aggregate([				#checks for availability and existence of the item. using $match combines the check
-			{"$unwind": "$menuItem"},					#unwinding the array of menuItem to separate menus
-			{"$match": {
-				"menuItem.name": {"$regex": f"^{menu_item}$", "$options": "i"},
-				"menuItem.inStock": True
-			}},
-			{"$project": {"name": "$menuItem.name"}},
-			{"$limit": 1}
-		]))
-		"""
 		try:
 			item = self.__server.get_menu_item(menu_item)
 		except (IndexError, TypeError, KeyError):
@@ -261,7 +249,7 @@ class Order:   #Maybe remove the second server param since we already do it in s
 	def get_order_id(self) -> str:
 		return self.__order_id
 
-	def get_time(self, time_enum: Type[Time]) -> str:
+	def get_time(self, time_enum: Time) -> str:
 		if time_enum == Time.ORDER:
 			return self.__order_time
 		elif time_enum == Time.READY:
@@ -279,6 +267,9 @@ class Order:   #Maybe remove the second server param since we already do it in s
 #──────────────────────────────────────────────
 # Setters
 #──────────────────────────────────────────────
+	def set_order_id(self, new_id: str):
+		self.__order_id = new_id
+
 	def set_instructions(self, instructions: str):
 		self.__special_instructions = instructions
 
@@ -287,7 +278,7 @@ class Order:   #Maybe remove the second server param since we already do it in s
 #──────────────────────────────────────────────
 
 	#I HAVE JUST UPDATED THIS ENTIRE THING TO WORK WITH SERVER.PY
-	def update_status(self, status: Type[Status]):		#with this we assume status is the status we want to change the order to
+	def update_status(self, status: Status):		#with this we assume status is the status we want to change the order to
 		self.__order_status = status.value				#extracting the string
 		now = datetime.now()							#capturing the current date and time for later use
 
