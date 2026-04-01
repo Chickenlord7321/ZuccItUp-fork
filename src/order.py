@@ -315,7 +315,7 @@ class Order:   #Maybe remove the second server param since we already do it in s
 
 	def place_order(self) -> bool:
      
-		if not self.__cart_items:
+		if not self.__cart:
 			print("Cannot place an order with no items.")
 			return False								#sanity check for morons that want to order "nothing"
 
