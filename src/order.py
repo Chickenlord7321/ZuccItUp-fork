@@ -53,7 +53,7 @@ class Cart:
 			print(f"'{menu_item}' was not found in any menu.")
 			return
   
-		if not item.get("InStock"):
+		if not item.get("inStock"):
 			print(f"'{item.get('name', menu_item)}' is out of stock.")	#if it is not available it gives this message
 			return
 
