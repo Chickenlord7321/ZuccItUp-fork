@@ -112,7 +112,7 @@ def login_or_signup():
     while True:
         try:
             option = input_int(
-                "\n─" * 20 + "\n  1. Login\n  2. Sign Up\n> ",
+                "\n" + "─" * 20 + "\n  1. Login\n  2. Sign Up\n> ",
                 1, 2
             )
         except LogoutException:     # In case user tries to log out even though they're not signed in yet
