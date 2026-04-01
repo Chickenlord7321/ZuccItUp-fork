@@ -124,7 +124,6 @@ def login_or_signup():
                 viu_id = input_str("VIU ID (9 digits)\n> ", r"^[0-9]{9}$")
                 password = getpass("Password\n> ")
                 if user.login(viu_id, password):
-                    print(f"\nWelcome back, {user.get_name()}!")
                     return
                 print("Incorrect VIU ID or password. Please try again.")
 
@@ -335,7 +334,7 @@ def _cart_and_checkout(user_obj, cart: Cart) -> bool:
 def run_customer():
     """Main loop for the Customer role."""
     customer = Customer(server, user)
-    print(f"\n  Welcome, {customer.get_name()}!")
+    print(f"\n  Welcome back, {customer.get_name()}!")
 
     while True:
         print("\n" + "─" * 45)
@@ -444,7 +443,7 @@ def run_agent():
     """Main loop for the Delivery Agent role."""
     agent = DeliveryAgent(server, user)
     avail_label = "Available" if agent.get_availability_status() else "Unavailable"
-    print(f"\n  Welcome, {agent.get_name()}!  ({avail_label})")
+    print(f"\n  Welcome back, {agent.get_name()}!  ({avail_label})")
 
     while True:
         print("\n" + "─" * 45)
