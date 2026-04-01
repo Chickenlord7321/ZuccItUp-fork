@@ -1,5 +1,5 @@
 # Authors: Bruce, Caleb
-
+from debug import DEBUG_MODE
 from server import Server
 from menu import Menu
 from order import Order, Cart, Status
@@ -318,7 +318,9 @@ def _cart_and_checkout(user_obj, cart: Cart) -> bool:
         # Place each order and send its notification
         for o in orders:
             if o.place_order():
-                print(f"  ✓ Order placed with {o.get_vendor()} (ID: {o.get_order_id()})")
+                print(f"  ✓ Order placed with {o.get_vendor()}")
+                if DEBUG_MODE:
+                    print(f"DEBUG: (ID: {o.get_order_id()})")
                 notif = Notification("", "", user_obj.get_name(), server, o.get_order_id())
                 notif.sendNotification()
 
