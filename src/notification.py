@@ -7,37 +7,33 @@ from datetime import datetime
 
 STATUS_MESSAGES = {
     "Pending": (
-        "Order Placed",
+        "Notification: Order Placed",
         "Your order from {vendor} has been placed and is waiting for a delivery agent.",
     ),
     "ReadyForPickup": (
-        "Order Ready for Pickup",
+        "Notification: Order Ready for Pickup",
         "Your order from {vendor} is packaged and ready to be picked up by a delivery agent.",
     ),
     "InTransit": (
-        "Order On Its Way",
+        "Notification: Order On Its Way",
         "Your order from {vendor} has been accepted by {agent} and is on its way!",
     ),
     "Received": (
-        "Order Delivered",
+        "Notification: Order Delivered",
         "Your order from {vendor} has been delivered by {agent}. Enjoy your meal!",
     ),
     "Delivered": (
-        "Order Delivered",
+        "Notification: Order Delivered",
         "Your order from {vendor} has been delivered by {agent}. Please confirm receipt.",
     ),
-    "Received": (
-        "Order Confirmed",
+    "Confirmed": (
+        "Notification: Order Confirmed",
         "Thank you! Your order from {vendor} has been confirmed as received.",
     ),
 }                                                                       #this is to avoid db
 
-class Notification():
-
+class Notification:
     def __init__(self, heading: str, description: str, customer_VIUID: str, server, order_id: str = "",):
-
-
-        
         self.time = datetime.now()
         self.description = description
         self.heading = heading
@@ -70,11 +66,11 @@ class Notification():
             if order:
                 heading, description = self._build_message(order)
         
-        print(f"\n  [{self.time.strftime('%Y-%m-%d %H:%M')}]")          #time
+        print(f"\n  At {self.time.strftime('%Y-%m-%d %H:%M')}")          #time
         print(f"  {heading}")                                           #heading print
         print(f"  {description}")                                       #might not need to print the description
         print("  " + "─" * 50)                                          #divider line
-        print(f"Notification sent to customer{self.customer_VIUID}")    #notification send
+        print(f"Notification sent to customer {self.customer_VIUID}")    #notification send
         return {"heading":heading,"description":description}            #since i now return the dictionary, the caller can use the message                                          #
 
     def viewNotification(self):
