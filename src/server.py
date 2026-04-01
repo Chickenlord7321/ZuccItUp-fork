@@ -314,12 +314,12 @@ class Server:
 			"cartItem": cart,
 			"orderStatus": "Pending",
 			"orderTime": datetime.now(),
-			"readyTime": None,
-			"acceptTime": None,
-			"pickupTime": None,
-			"deliveryTime": None,
-			"confirmationTime": None,
-			"agent": "",										#do we not need these?
+			# "readyTime": None,
+			# "acceptTime": None,
+			# "pickupTime": None,
+			# "deliveryTime": None,
+			# "confirmationTime": None,
+			# "agent": "",										#do we not need these?
 		}
 
 		result = self.__order.insert_one(order_doc)

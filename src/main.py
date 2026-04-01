@@ -25,25 +25,6 @@ class LogoutException(Exception):
         return f"LogoutException: {self.message}"
 
 
-# DB
-print("Welcome to Zucc It Up!\n")
-print("Type 'quit' at any time to exit, or 'logout' to log out of your account.\n")
-
-mango_username = input("Enter your MangoDB username: ")
-mango_password = getpass("Enter your MangoDB password: ")
-
-try:
-    server = Server(user_id=mango_username, passwd=mango_password)
-except ValueError as e:
-    print(f"\nCould not connect to the database: {e}")
-    print("Please check your credentials and try again.")
-    sys.exit(1)
-
-# A single User object persists across login/logout cycles
-user = User(server)
-# DB end
-
-
 # input function helpers
 # logout checker
 def check_logout_or_quit(answer: str) -> str:
@@ -105,6 +86,24 @@ def input_int(msg: str, minimum: int = -sys.maxsize - 1, maximum: int = sys.maxs
 
 
 # end of input
+
+# DB
+print("Welcome to Zucc It Up!\n")
+print("Type 'quit' at any time to exit, or 'logout' to log out of your account.\n")
+
+mango_username = input_str("Enter your MangoDB username: ")
+mango_password = getpass("Enter your MangoDB password: ")
+
+try:
+    server = Server(user_id=mango_username, passwd=mango_password)
+except ValueError as e:
+    print(f"\nCould not connect to the database: {e}")
+    print("Please check your credentials and try again.")
+    sys.exit(1)
+
+# A single User object persists across login/logout cycles
+user = User(server)
+# DB end
 
 
 # Login / Signup
