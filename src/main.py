@@ -1,3 +1,5 @@
+# Authors: Bruce, Caleb
+
 from server import Server
 from menu import Menu
 from order import Order, Cart, Status

@@ -18,13 +18,7 @@ def agent_main(server):
     viuid = input("Enter your VIUID: ").strip()
  
     #build temporary agent just to call verifyVIUID
-    temp = DeliveryAgent(
-        availabilityStatus=False,
-        VIUID=viuid,
-        name="",
-        email="",
-        role="Agent",
-    )
+    temp = DeliveryAgent(server)
     temp.server = server
     #verify id
     if not temp.verifyVIUID():
