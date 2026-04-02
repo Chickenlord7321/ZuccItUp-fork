@@ -2,16 +2,18 @@
 
 from typing import Type	# supports using a class as an argument for a function
 from enum import Enum	# for enumerations
+from datetime import datetime
+from server import Server
 
 
 class Cart:
-	def __init__(self, building: str, room: str):
+	def __init__(self, building: str, room: str, server):
 		# You can declare private attributes using double underscores (__)
 		# before the name of the variable
 		self.__building = building
 		self.__room = room
 		self.__subtotal = 0.0
-
+		self.__server = server
 		# Format of cart items:
 		# {
 		#   "menuItemID": quantity (int),
@@ -34,7 +36,9 @@ class Cart:
 
 	# Setters
 	def set_location(self, building: str, room: str):
-		pass
+		self.__building = building 
+		self.__room = room
+		#pass
 #──────────────────────────────────────────────
 # Other functions
 #──────────────────────────────────────────────
@@ -43,28 +47,25 @@ class Cart:
 		if quantity <= 0:
 			print("Quantity must be greater than 0.")	#avoiding troll inputs
 			return
-
-		result = list(db.menu.aggregate([				#checks for availability and existence of the item. using $match combines the check
-			{"$unwind": "$menuItem"},					#unwinding the array of menuItem to separate menus
-			{"$match": {
-				"menuItem.name": {"$regex": f"^{menu_item}$", "$options": "i"},
-				"menuItem.inStock": True
-			}},
-			{"$project": {"name": "$menuItem.name"}},
-			{"$limit": 1}
-		]))
-
-		if not result:
-			print(f"'{menu_item}' is out of stock.")	#if it is not available it gives this message
+		try:
+			item = self.__server.get_menu_item(menu_item)
+		except (IndexError, TypeError, KeyError):
+			print(f"'{menu_item}' was not found in any menu.")
+			return
+  
+		if not item.get("inStock"):
+			print(f"'{item.get('name', menu_item)}' is out of stock.")	#if it is not available it gives this message
 			return
 
-		canonical_name = result[0]["name"]				#the true name as given in the database(Chicken Strips and not chicken sTRIps)
-
+		canonical_name = item["name"]				#the true name as given in the database(Chicken Strips and not chicken sTRIps)
+		vendor = item.get("vendor", "")				#need the vedor the item belongs to
+  
 		if canonical_name in self.__cart_items:			#this checks if the item is already in the cart, if so it just adds to the quantity of the item
-			self.__cart_items[canonical_name] += quantity
+			self.__cart_items[canonical_name]["qty"] += quantity
 
 		else:
-			self.__cart_items[canonical_name] = quantity
+			self.__cart_items[canonical_name] = {"qty": quantity, "vendor": vendor}
+   
 		print(f"Added {quantity}x '{canonical_name}' to cart.")
 
 	def change_quantity(self, menu_item: str, quantity: int):
@@ -77,7 +78,7 @@ class Cart:
 			self.remove_from_cart(menu_item)
 
 		else:
-			self.__cart_items[menu_item] = quantity		#updating the quantity to the new quantity given, if it is meant to be incremental or decremental please change this
+			self.__cart_items[menu_item]["qty"] = quantity		#updating the quantity to the new quantity given, if it is meant to be incremental or decremental please change this
 			print(f"Updated '{menu_item}' quantity to {quantity}.")
 
 	def remove_from_cart(self, menu_item: str):
@@ -92,20 +93,13 @@ class Cart:
 	def calculate_subtotal(self) -> float:
 		total = 0.0
   
-		for item_name, qty in self.__cart_items.items():#looping through every item in the cart, giving item name and quantity
-			result = list(db.menu.aggregate([			
-            {"$unwind": "$menuItem"},
-            {"$match": {"menuItem.name": {"$regex": f"^{item_name}$", "$options": "i"}}},
-            {"$project": {"price": "$menuItem.price"}},
-            {"$limit": 1}								#for each item we check price
-        ]))
-   
-			if result:									#adding price accounting for the quantity
-				total += result[0]["price"] * qty	
-			
-			else:										#sanity check if price is not in the menu
+		for item_name, info in self.__cart_items.items():	#looping through every item in the cart, giving item name and quantity
+			qty = info["qty"]								#new version
+			try:
+				item = self.__server.get_menu_item(item_name)
+				total += item.get("price", 0.0) * qty
+			except (IndexError, TypeError, KeyError):
 				print(f"Warning: price for '{item_name}' not found in menu.")
-            
 		self.__subtotal = round(total, 2)
 		return self.__subtotal							#rounding the total and returning it so its a dollar amount $42.069 as a total does not make sense
 
@@ -118,8 +112,8 @@ class Cart:
 		print(f"\n{'Item':<25} {'Qty':>5}")				#printing column with spacing and divider
 		print("─" * 35)
 
-		for item, qty in self.__cart_items.items():		#looping through to print each item and quantity aligned with the column made above
-			print(f"{item:<25} {qty:>5}")
+		for item, info in self.__cart_items.items():		#looping through to print each item and quantity aligned with the column made above
+			print(f"{item:<25} {info['qty']:>5}  {info.get('vendor', '')}")
    
 		print("─" * 35)									#closing divider line
 		print(f"Delivery to: Building {self.__building}, Room {self.__room}")
@@ -128,25 +122,46 @@ class Cart:
 	def num_items(self) -> int:
 		return len(self.__cart_items)					#!!!!!!!!!!!!!!!!Bruce did not write this, please comment this!!!!!!!!!!!!!
 
-	def convert_to_orders(self):
+	def convert_to_orders(self, customer: str, instructions: str = "") -> list:
 
 		if not self.__cart_items:
 			print("Cannot place an empty order.")		#again, calling this with an empty cart means you need to seek psyciatric help(i cannot spell)
-			return None
+			return []
 
-		subtotal = self.calculate_subtotal()			#calling the subtotal function to display the subtotal as required
-
-		order = Order(									#creating the order(i might be missing something here)
-			building=self.__building,
-			room=self.__room,
-			total=subtotal,
-			customer=customer,
-			vendor=vendor,
-		)
-  
-		self.__cart_items = {}							#clearing the cart for the next order after making it into an order
+		by_vendor = {}
+		for item_name, info in self.__cart_items.items():
+			vendor = info.get("vendor", "Unknown Vendor")
+			if vendor not in by_vendor:
+				by_vendor[vendor] = []
+			by_vendor[vendor].append({"name": item_name, "qty": info["qty"]})
+ 
+		orders = []
+		for vendor_name, cart_list in by_vendor.items():
+			# Calculate the subtotal for this vendor's items only
+			vendor_subtotal = 0.0
+			for ci in cart_list:
+				try:
+					item = self.__server.get_menu_item(ci["name"])
+					vendor_subtotal += item.get("price", 0.0) * ci["qty"]
+				except (IndexError, TypeError, KeyError):
+					pass
+ 
+			order = Order(
+				svr=self.__server,
+				building=self.__building,
+				room=self.__room,
+				total=round(vendor_subtotal, 2),
+				instructions=instructions,
+				customer=customer,
+				vendor=vendor_name,
+				cart=cart_list,            #pass items so place_order() can store them
+			)
+			orders.append(order)
+ 
+		#Clear the cart — the orders now hold everything needed
+		self.__cart_items = {}
 		self.__subtotal = 0.0
-		return order									#returning the order does not mean the order is placed, place_order() should be called i think
+		return orders								#returning the order does not mean the order is placed, place_order() should be called i think
 		
 
 
@@ -158,12 +173,12 @@ class Cart:
 # Short enum class for order times:
 #──────────────────────────────────────────────
 class Time(Enum):
-	ORDER = "ORDER"
-	READY = "READY"
-	ACCEPT = "ACCEPT"
-	PICKUP = "PICKUP"
-	DELIVERY = "DELIVERY"
-	CONFIRMATION = "CONFIRMATION"
+	ORDER = "Order"
+	READY = "Ready"
+	ACCEPT = "Accept"
+	PICKUP = "Pickup"
+	DELIVERY = "Delivery"
+	CONFIRMATION = "Confirmation"
 #──────────────────────────────────────────────
 # End of Time class
 #──────────────────────────────────────────────
@@ -174,29 +189,30 @@ class Time(Enum):
 #──────────────────────────────────────────────
 class Status(Enum):
 	# Not quite sure how to do this, but here's some ideas:
-	# PENDING = "PENDING"	# waiting for agent to accept the order
-	# READY_FOR_PICKUP = "READY_FOR_PICKUP"
-	# IN_TRANSIT = "IN_TRANSIT"
-	# DELIVERED = "DELIVERED"
-	# RECEIVED = "RECEIVED"
-	pass
+	PENDING = "Pending"	# waiting for agent to accept the order
+	READY_FOR_PICKUP = "ReadyForPickup"
+	IN_TRANSIT = "InTransit"
+	DELIVERED = "Delivered"
+	RECEIVED = "Received"
 #──────────────────────────────────────────────
 # End of Status class
 #──────────────────────────────────────────────
 
 
-class Order:
-	def __init__(self, building: str, room: str, total: float, instructions: str, customer: str, vendor: str):
+class Order:   #Maybe remove the second server param since we already do it in svr?
+	def __init__(self, svr: Server, building: str, room: str, total: float, instructions: str, customer: str, vendor: str, cart: list = None):
+		self.__server = svr
 		self.__building = building
 		self.__room = room
 		self.__subtotal = total
 		self.__special_instructions = instructions
 		self.__customer = customer
 		self.__vendor = vendor
+		self.__cart = cart or []
 		self.__agent = ""
 		self.__order_id = ""
 		self.__order_status = ""
-		self.__placed_time = ""
+		self.__order_time = ""
 		self.__ready_time = ""
 		self.__accept_time = ""
 		self.__pickup_time = ""
@@ -217,9 +233,15 @@ class Order:
 	def get_status(self) -> str:
 		return self.__order_status
 
+	def get_vendor(self) -> str:
+		return self.__vendor
+ 
+	def get_order_id(self) -> str:
+		return self.__order_id
+
 	def get_time(self, time_enum: Type[Time]) -> str:
-		if time_enum == Time.PLACED:
-			return self.__placed_time
+		if time_enum == Time.ORDER:
+			return self.__order_time
 		elif time_enum == Time.READY:
 			return self.__ready_time
 		elif time_enum == Time.ACCEPT:
@@ -237,76 +259,74 @@ class Order:
 #──────────────────────────────────────────────
 	def set_instructions(self, instructions: str):
 		self.__special_instructions = instructions
+  
+	def set_order_id(self, order_id: str):
+		self.__order_id = order_id				#added for main
 
+	def set_status(self, status: str):
+		self.__order_status = status			#added for main
 #──────────────────────────────────────────────
 # Other functions
 #──────────────────────────────────────────────
+
+	#I HAVE JUST UPDATED THIS ENTIRE THING TO WORK WITH SERVER.PY
 	def update_status(self, status: Type[Status]):		#with this we assume status is the status we want to change the order to
 		self.__order_status = status.value				#extracting the string
 		now = datetime.now()							#capturing the current date and time for later use
 
-		update_fields = {"orderStatus": self.__order_status} #starting the dictionary of fields to write to the db
 
 		if status == Status.READY_FOR_PICKUP:
 			self.__ready_time = now	
-			update_fields["readyTime"] = now			#status transition for ready to pickup
+			if self.__order_id:
+				self.__server.update_order_status(self.__order_id, self.__order_status)
+				self.__server.update_readyTime(now, self.__order_id)
 
 		elif status == Status.IN_TRANSIT:
 			self.__pickup_time = now
-			update_fields["pickupTime"] = now			#status transition for in transit
-
+			if self.__order_id:
+				self.__server.update_order_status(self.__order_id, self.__order_status)
+				self.__server.update_pickupTime(now, self.__order_id)
+    
 		elif status == Status.DELIVERED:
 			self.__delivery_time = now
-			update_fields["deliveryTime"] = now			#status transition for delivered
-
+			if self.__order_id:
+				self.__server.update_order_status(self.__order_id, self.__order_status)
+				self.__server.update_deliveryTime(now, self.__order_id)
+    
 		elif status == Status.RECEIVED:
 			self.__confirmation_time = now
-			update_fields["acceptTime"] = now			#might omit, transition to received
-
-		if self.__order_id:
-			db.order.update_one(
-				{"_id": self.__order_id},
-				{"$set": update_fields}					#first we check if the order exists(it should but checks are good) then we update the fields of the order using the id to find it
-			)
+			if self.__order_id:
+				self.__server.update_order_status(self.__order_id, self.__order_status)
+				self.__server.update_confirmationTime(now, self.__order_id)
+    
+		elif self.__order_id:
+			#Fallback: just update the status field for any other status. this is just a failsafe
+			self.__server.update_order_status(self.__order_id, self.__order_status)
 
 		print(f"Order status updated to: {status.value}") #prints the change to the user, will omit this later since the user does not actually need this unless they ask for it
 
 	def place_order(self) -> bool:
      
-		if not cart_items:
+		if not self.__cart:
 			print("Cannot place an order with no items.")
 			return False								#sanity check for morons that want to order "nothing"
 
-		self.__placed_time = datetime.now()				#recording order time
-
-		sanitized_items = [
-			{"name": item["name"], "qty": int(item["qty"])}
-			for item in cart_items						#List to rebuild each cart item, casting quantity as int because when i googled, mangodb messes with floats and stuff
-		]
-
-		order_doc = {
-			"building": self.__building,
-			"room": self.__room,
-			"subTotal": float(self.__subtotal),
-			"specialInstructions": self.__special_instructions,
-			"orderStatus": self.__order_status,
-			"orderTime": self.__placed_time,
-			"readyTime": None,
-			"acceptTime": None,
-			"pickupTime": None,
-			"deliveryTime": None,
-			"agent": self.__agent,
-			"customer": self.__customer,
-			"vendor": self.__vendor,
-			"cartItem": sanitized_items,				#i migh've missed something please double check!!!!!!
-		}												#assembling the full doc to insert
-
-		result = db.order.insert_one(order_doc)			#insering the document into the collection. mango should respond with an object containing the new document's ID
-		self.__order_id = result.inserted_id			#saving the ID onto the object which all the order methods will use to find the particular order
+		self.__order_time = datetime.now()				#recording order time
+		self.__order_status = Status.PENDING.value		#setting initial status
   
-		print(f"\nOrder placed successfully! Order ID: {self.__order_id}")
-		print(f"Delivering to: Building {self.__building}, Room {self.__room}")
-		print(f"Subtotal: ${self.__subtotal:.2f}")		#print statements indicating important info
+
+		#changed this to call server.py for the insertion
+		self.__order_id = self.__server.create_order(
+			building=self.__building,
+			room=self.__room,
+			subtotal=float(self.__subtotal),
+			instructions=self.__special_instructions,
+			customer=self.__customer,
+			vendor=self.__vendor,
+			cart=self.__cart,
+		)				
+  
+		self.__server.update_orderTime(self.__order_time, self.__order_id)
   
 		return True										#returns success to the caller
 
@@ -318,36 +338,59 @@ class Order:
 
 		self.__agent = agent							#assigning agent
 		self.__accept_time = datetime.now()				#marking the time the order is accepted
-		self.__order_status = Status.IN_TRANSIT.value	#changing order status for obvious reasons
+		self.__order_status = Status.READY_FOR_PICKUP.value	#changing order status for obvious reasons
 
-		db.order.update_one(
-			{"_id": self.__order_id},
-			{"$set": {
-				"agent": agent,
-				"orderStatus": self.__order_status,
-				"acceptTime": self.__accept_time,		#writing the agent, orderStatus and acceptTime to the db
-			}}
-		)
+		self.__server.add_agent_to_order(order_id=self.__order_id, agent_id=self.__agent)
+		self.__server.update_order_status(order_id=self.__order_id, status=self.__order_status)
+		self.__server.update_acceptTime(time=self.__accept_time, order_id=self.__order_id)
+  
 		print(f"Order accepted by agent '{agent}'.")	#saying who actually accepted the order
 
-	def mark_complete(self):
-     
+	def mark_picked_up(self):
+		#added this as per new list in A6 doc
 		if not self.__order_id:
 			print("Order has not been placed yet.")
-			return										#yet another check for the system not to break completely
-
-		self.__delivery_time = datetime.now()			#marking delivery time
-		self.__order_status = Status.RECEIVED.value		#updaing the orderStatus
-
-		db.order.update_one(
-			{"_id": self.__order_id},
-			{"$set": {
-				"orderStatus": self.__order_status,
-				"deliveryTime": self.__delivery_time,	#actually writing the changes to the db
-			}}
-		)
+			return
+ 
+		self.__pickup_time = datetime.now()
+		self.__order_status = Status.IN_TRANSIT.value
+ 
+		self.__server.update_order_status(order_id=self.__order_id, status=self.__order_status)
+		self.__server.update_pickupTime(time=self.__pickup_time, order_id=self.__order_id)
+ 
+		print("Order picked up. Status: In Transit.")
   
-		print("Order marked as complete.")				#messaging that the order is complete
+	def mark_delivered(self):
+		#added this as per new list in A6 doc
+		if not self.__order_id:
+			print("Order has not been placed yet.")
+			return
+ 
+		self.__delivery_time = datetime.now()
+		self.__order_status = Status.DELIVERED.value
+ 
+		self.__server.update_order_status(order_id=self.__order_id, status=self.__order_status)
+		# Fixed: was calling update_orderTime (wrong field), now correctly calls update_deliveryTime
+		self.__server.update_deliveryTime(time=self.__delivery_time, order_id=self.__order_id)
+ 
+		print("Order marked as delivered.")
+ 
+	def confirm_received(self):
+		#added this as per new list in A6 doc
+		if not self.__order_id:
+			print("Order has not been placed yet.")
+			return
+ 
+		self.__confirmation_time = datetime.now()
+		self.__order_status = Status.RECEIVED.value
+ 
+		self.__server.update_order_status(order_id=self.__order_id, status=self.__order_status)
+		self.__server.update_confirmationTime(time=self.__confirmation_time, order_id=self.__order_id)
+ 
+		print("Thank you! Order confirmed as received.")
+
+	#not required accoring to me
+
 
 	def view_order(self) -> dict:
 		order_dict = {
@@ -360,7 +403,7 @@ class Order:
 			"subtotal": self.__subtotal,
 			"status": self.__order_status,
 			"special_instructions": self.__special_instructions,
-			"placed_time": self.__placed_time,
+			"order_time": self.__order_time,
 			"accept_time": self.__accept_time,
 			"ready_time": self.__ready_time,
 			"pickup_time": self.__pickup_time,
@@ -378,13 +421,16 @@ class Order:
 		print(f"  Status:        {self.__order_status}")							#THIS BE THE STATUS
 		if self.__special_instructions:
 			print(f"  Instructions:  {self.__special_instructions}")				#maybe it's special, maybe it's not
-		if self.__placed_time:
-			print(f"  Placed at:     {self.__placed_time.strftime('%Y-%m-%d %H:%M')}") #is it placed? or maybe it is not?!?!?!
+		if self.__order_time:
+			print(f"  Placed at:     {self.__order_time.strftime('%Y-%m-%d %H:%M')}") #is it placed? or maybe it is not?!?!?!
 		print("─" * 50)									#divider
 		return order_dict								#i have lost my mind
 
 	def view_all_orders(self) -> list[dict]:
-		orders = list(db.order.find())
+		
+		#changed this to call server.py
+		orders = self.__server.get_all_orders()
+  
 		if not orders:
 			print("No orders found.")
 			return []									#this is cwaaaaazy, no orders at all?????????
