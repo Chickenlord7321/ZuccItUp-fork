@@ -243,7 +243,7 @@ def _cart_and_checkout(user_obj, cart: Cart) -> bool:
     instructions = input_str("Special instructions (press Enter to skip)\n> ")
  
     # Convert cart → one Order per vendor (spec: "potentially multiple orders")
-    orders = cart.convert_to_orders(user_obj.get_name(), instructions)
+    orders = cart.convert_to_orders(user_obj.get_current_user(), instructions)
     if not orders:
         print("No orders to place.")
         return False
@@ -305,7 +305,7 @@ def _view_customer_orders(customer: Customer):
     """Display all orders placed by this customer."""
     my_orders = [
         o for o in server.get_all_orders()
-        if o.get("customer") == customer.get_name()
+        if o.get("customer") == customer.get_current_user()
     ]
     if not my_orders:
         print("\nYou have no order history.")
@@ -425,7 +425,7 @@ def _view_agent_active_orders(agent: DeliveryAgent):
     """
     active = [
         o for o in server.get_all_orders()
-        if o.get("agent") == agent.get_name()
+        if o.get("agent") == agent.get_current_user()
         and o.get("orderStatus") in [Status.READY_FOR_PICKUP.value, Status.IN_TRANSIT.value]
     ]
     if not active:
@@ -523,7 +523,7 @@ def _view_available_deliveries(agent: DeliveryAgent):
         order.set_order_id(order_id)
         order.set_status(selected.get("orderStatus", ""))
  
-        order.accept_order(agent.get_name())    # Status → ReadyForPickup, acceptTime set
+        order.accept_order(agent.get_current_user())    # Status → ReadyForPickup, acceptTime set
         _send_status_notification(order_id, selected.get("customer",""))
  
         print(f"\n  Deliver to: Bldg {selected.get('building')}, Rm {selected.get('room')}")

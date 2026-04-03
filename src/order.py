@@ -199,8 +199,19 @@ class Status(Enum):
 #──────────────────────────────────────────────
 
 
-class Order:   #Maybe remove the second server param since we already do it in svr?
+class Order:
 	def __init__(self, svr: Server, building: str, room: str, total: float, instructions: str, customer: str, vendor: str, cart: list = None):
+		"""
+		Creates an order object
+		:param svr: A Server object
+		:param building: String containing 3-digit building number
+		:param room: String containing 3-digit room number (optional letter at the end)
+		:param total: Cost of the order
+		:param instructions: String of special instructions
+		:param customer: VIU ID of the customer
+		:param vendor: Name of the vendor
+		:param cart: a list of dicts containing cart items.
+		"""
 		self.__server = svr
 		self.__building = building
 		self.__room = room
