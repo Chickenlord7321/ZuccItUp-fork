@@ -28,7 +28,7 @@ except ValueError as e:
     print("Please check your credentials and try again.")
     sys.exit(1)
  
-    #A single User object persists across login/logout cycles
+# A single User object persists across login/logout cycles
 user = User(server)
 #DB end
 
@@ -74,7 +74,7 @@ def input_int(msg: str, minimum: int = -sys.maxsize - 1, maximum: int = sys.maxs
 def login_or_signup():
     while True:
         option = input_int(
-            "\n" + "-" * 20 + "\n 1. Login\n  2. Sign Up\n> ",
+            "\n" + "-" * 20 + "\n 1. Login\n 2. Sign Up\n> ",
             1, 2
         )
  
@@ -273,7 +273,6 @@ def _cart_and_checkout(user_obj, cart: Cart) -> bool:
 def run_customer():
     """Main loop for the Customer role."""
     customer = Customer(server, user)
-    print(f"\n  Welcome, {customer.get_name()}!")
  
     while True:
         print("\n" + "─" * 45)
@@ -378,7 +377,7 @@ def run_agent():
     """Main loop for the Delivery Agent role."""
     agent = DeliveryAgent(server, user)
     avail_label = "Available" if agent.get_availability_status() else "Unavailable"
-    print(f"\n  Welcome, {agent.get_name()}!  ({avail_label})")
+    print(f"\n  Your current status is: {avail_label} for deliveries")
  
     while True:
         print("\n" + "─" * 45)
