@@ -330,7 +330,7 @@ def _confirm_received_flow(customer: Customer):
     """
     delivered = [
         o for o in server.get_all_orders()
-        if o.get("customer") == customer.get_name()
+        if o.get("customer") == customer.get_current_user()
         and o.get("orderStatus") == Status.DELIVERED.value
     ]
     if not delivered:
