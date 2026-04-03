@@ -21,8 +21,11 @@ class Server:
 	"""
 	def __init__(self, user_id: str, passwd: str):
 		# DEBUG
-		print("Username: " + user_id)
-		print("Password: " + passwd)
+		if DEBUG_MODE:
+			print("DEBUG")
+			print("Username: " + user_id)
+			print("Password: " + passwd)
+			print("END DEBUG")
 
 		# Name of the project you want to connect to, e.g. csci375a_project
 		self.__project = user_id + "_project"
@@ -38,8 +41,10 @@ class Server:
 			self.__db.command("ping")
 		except Exception as e:		# Username and/or password were NOT correct
 			if DEBUG_MODE:
+				print("DEBUG")
 				print("Pymongo error is:")
 				print(e)
+				print("END DEBUG")
 			raise ValueError("Could not connect to MongoDB: username or password was incorrect")
 		else:
 			# Get collections as private attributes
@@ -314,12 +319,12 @@ class Server:
 			"cartItem": cart,
 			"orderStatus": "Pending",
 			"orderTime": datetime.now(),
-			"readyTime": None,
-			"acceptTime": None,
-			"pickupTime": None,
-			"deliveryTime": None,
-			"confirmationTime": None,
-			"agent": "",										#do we not need these?
+			# "readyTime": None,
+			# "acceptTime": None,
+			# "pickupTime": None,
+			# "deliveryTime": None,
+			# "confirmationTime": None,
+			# "agent": "",										#do we not need these?
 		}
 
 		result = self.__order.insert_one(order_doc)
