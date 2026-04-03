@@ -74,7 +74,7 @@ def input_int(msg: str, minimum: int = -sys.maxsize - 1, maximum: int = sys.maxs
 def login_or_signup():
     while True:
         option = input_int(
-            "\n" + "-" * 20 + "\n 1. Login\n  2. Sign Up\n> ",
+            "\n" + "-" * 20 + "\n 1. Login\n 2. Sign Up\n> ",
             1, 2
         )
  
@@ -87,7 +87,7 @@ def login_or_signup():
             print("Incorrect VIU ID or password. Please try again.")
  
         else:
-            role_opt = input_int("Role:\n  1. Customer\n  2. Delivery Agent\n> ", 1, 2)
+            role_opt = input_int("Role:\n  1. Customer\n 2. Delivery Agent\n> ", 1, 2)
             role     = "Customer" if role_opt == 1 else "Agent"
             viu_id   = input_str("VIU ID (9 digits)\n> ", r"^[0-9]{9}$")
             password = getpass("Choose a password\n> ")
