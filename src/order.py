@@ -354,8 +354,9 @@ class Order:
 		self.__server.add_agent_to_order(order_id=self.__order_id, agent_id=self.__agent)
 		self.__server.update_order_status(order_id=self.__order_id, status=self.__order_status)
 		self.__server.update_acceptTime(time=self.__accept_time, order_id=self.__order_id)
+		agent_name = self.__server.view_user(agent)["name"]
   
-		print(f"Order accepted by agent '{agent}'.")	#saying who actually accepted the order
+		print(f"  Order accepted by agent '{agent_name}'.")	#saying who actually accepted the order
 
 	def mark_picked_up(self):
 		#added this as per new list in A6 doc
