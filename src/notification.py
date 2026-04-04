@@ -44,7 +44,7 @@ class Notification:
         
         status = order.get("orderStatus", "")                           #we get the notification based on the order status
         vendor = order.get("vendor", "the vendor")                      #the vendor name to display
-        agent  = self.server.view_user(order.get("agent")["name"] or "your delivery agent"            #the agent assigned or we give the generic "your delivery agent"
+        agent  = self.server.view_user(order.get("agent"))["name"] or "your delivery agent"            #the agent assigned or we give the generic "your delivery agent"
 
         if status in STATUS_MESSAGES:                                   #sanity check to make sure it returns the status message as given at the top of this file
             heading, description_template = STATUS_MESSAGES[status]     #pulls from the messages at the top based on the status of the order
