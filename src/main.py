@@ -632,7 +632,7 @@ def _send_status_notification(order_id: str, customer_name: str):
  
 def _view_agent_notifications(agent: DeliveryAgent):
     """Show notifications for all orders involving this agent."""
-    notif = Notification("", "", agent.get_name(), server)
+    notif = Notification("", "", agent.get_current_user(), server)
     notif.viewNotification()
 #agent flow complete
 
