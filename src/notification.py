@@ -4,7 +4,6 @@
 # It represents a notification that can be sent to users,
 # including its time, description, and heading.
 from datetime import datetime
-
 from debug import DEBUG_MODE
 
 STATUS_MESSAGES = {
@@ -33,9 +32,6 @@ STATUS_MESSAGES = {
 class Notification:
 
     def __init__(self, heading: str, description: str, customer_VIUID: str, server, order_id: str = "",):
-
-
-        
         self.time = datetime.now()
         self.description = description
         self.heading = heading
@@ -48,8 +44,8 @@ class Notification:
         
         status = order.get("orderStatus", "")                           #we get the notification based on the order status
         vendor = order.get("vendor", "the vendor")                      #the vendor name to display
-        agent  = order.get("agent") or "your delivery agent"            #the agent assigned or we give the generic "your delivery agent"
- 
+        agent  = self.server.view_user(order.get("agent")["name"] or "your delivery agent"            #the agent assigned or we give the generic "your delivery agent"
+
         if status in STATUS_MESSAGES:                                   #sanity check to make sure it returns the status message as given at the top of this file
             heading, description_template = STATUS_MESSAGES[status]     #pulls from the messages at the top based on the status of the order
             description = description_template.format(vendor=vendor, agent=agent)
