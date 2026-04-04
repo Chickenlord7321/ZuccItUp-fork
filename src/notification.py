@@ -28,7 +28,7 @@ STATUS_MESSAGES = {
     ),
 }                                                                       #this is to avoid db
 
-class Notification():
+class Notification:
 
     def __init__(self, heading: str, description: str, customer_VIUID: str, server, order_id: str = "",):
 
@@ -66,11 +66,11 @@ class Notification():
             if order:
                 heading, description = self._build_message(order)
         
-        print(f"\n  [{self.time.strftime('%Y-%m-%d %H:%M')}]")          #time
+        print(f"\n  Sent at{self.time.strftime('%Y-%m-%d %H:%M')}")          #time
         print(f"  {heading}")                                           #heading print
         print(f"  {description}")                                       #might not need to print the description
         print("  " + "─" * 50)                                          #divider line
-        print(f"Notification sent to customer{self.customer_VIUID}")    #notification send
+        print(f"  Notification sent to customer: {self.customer_VIUID}")    #notification send
         return {"heading":heading,"description":description}            #since i now return the dictionary, the caller can use the message                                          #
 
     def viewNotification(self):
