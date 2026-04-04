@@ -5,6 +5,8 @@
 # including its time, description, and heading.
 from datetime import datetime
 
+from debug import DEBUG_MODE
+
 STATUS_MESSAGES = {
     "Pending": (
         "Order Placed",
@@ -65,9 +67,9 @@ class Notification:
             
             if order:
                 heading, description = self._build_message(order)
-        
-        print(f"\n  Sent at{self.time.strftime('%Y-%m-%d %H:%M')}")          #time
-        print(f"  {heading}")                                           #heading print
+
+        print(f"\n  {heading}")  # heading print
+        print(f"  Sent at{self.time.strftime('%Y-%m-%d %H:%M')}")          #time
         print(f"  {description}")                                       #might not need to print the description
         print("  " + "─" * 50)                                          #divider line
         print(f"  Notification sent to customer: {self.customer_VIUID}")    #notification send
@@ -99,13 +101,14 @@ class Notification:
                                                                         #this line does a few things
                                                                         #it converts the datetime string to readable string strftime converts it to the YYYY-MM-DD HH-MM-SS i omitted the seconds
                                                                         #so if the ordertime is not there, it will just display "unknown time"
+            print(f"\n  {heading}")
+            print(f"  Placed at {time_str}\tStatus: {order.get('orderStatus', 'Unknown')}")
+            print(f"  {description}")                                     #printing the heading and description, again we might not need description everytime
             
-            print(f"\n  [{time_str}]  Status: {order.get('orderStatus', 'Unknown')}")
-            print(f"  {heading}")
-            print(f"{description}")                                     #printing the heading and description, again we might not need description everytime
-            
-            if order.get("_id"):                                        #getting order id, if it does then prints the id
-                print(f" Order ID: {order['_id']}")
+            if DEBUG_MODE:                                        #getting order id, if it does then prints the id
+                print("DEBUG")
+                print(f"Order ID: {order['_id']}")
+                print("END DEBUG")
             print(" "+ "─" * 50)                                        #divider line
             
             notifications.append({"heading": heading, "description": description, "order" : order}) #adds the dictionary to the notifications and then goes back to the for loop
