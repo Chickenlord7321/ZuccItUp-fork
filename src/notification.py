@@ -4,6 +4,7 @@
 # It represents a notification that can be sent to users,
 # including its time, description, and heading.
 from datetime import datetime
+from debug import DEBUG_MODE
 
 STATUS_MESSAGES = {
     "Pending": (
@@ -28,12 +29,9 @@ STATUS_MESSAGES = {
     ),
 }                                                                       #this is to avoid db
 
-class Notification():
+class Notification:
 
     def __init__(self, heading: str, description: str, customer_VIUID: str, server, order_id: str = "",):
-
-
-        
         self.time = datetime.now()
         self.description = description
         self.heading = heading
@@ -46,8 +44,8 @@ class Notification():
         
         status = order.get("orderStatus", "")                           #we get the notification based on the order status
         vendor = order.get("vendor", "the vendor")                      #the vendor name to display
-        agent  = order.get("agent") or "your delivery agent"            #the agent assigned or we give the generic "your delivery agent"
- 
+        agent  = self.server.view_user(order.get("agent"))["name"] or "your delivery agent"            #the agent assigned or we give the generic "your delivery agent"
+
         if status in STATUS_MESSAGES:                                   #sanity check to make sure it returns the status message as given at the top of this file
             heading, description_template = STATUS_MESSAGES[status]     #pulls from the messages at the top based on the status of the order
             description = description_template.format(vendor=vendor, agent=agent)
@@ -65,12 +63,12 @@ class Notification():
             
             if order:
                 heading, description = self._build_message(order)
-        
-        print(f"\n  [{self.time.strftime('%Y-%m-%d %H:%M')}]")          #time
-        print(f"  {heading}")                                           #heading print
+
+        print(f"\n  {heading}")  # heading print
+        print(f"  Sent at{self.time.strftime('%Y-%m-%d %H:%M')}")          #time
         print(f"  {description}")                                       #might not need to print the description
         print("  " + "─" * 50)                                          #divider line
-        print(f"Notification sent to customer{self.customer_VIUID}")    #notification send
+        print(f"  Notification sent to customer: {self.customer_VIUID}")    #notification send
         return {"heading":heading,"description":description}            #since i now return the dictionary, the caller can use the message                                          #
 
     def viewNotification(self):
@@ -99,13 +97,14 @@ class Notification():
                                                                         #this line does a few things
                                                                         #it converts the datetime string to readable string strftime converts it to the YYYY-MM-DD HH-MM-SS i omitted the seconds
                                                                         #so if the ordertime is not there, it will just display "unknown time"
+            print(f"\n  {heading}")
+            print(f"  Placed at {time_str}\tStatus: {order.get('orderStatus', 'Unknown')}")
+            print(f"  {description}")                                     #printing the heading and description, again we might not need description everytime
             
-            print(f"\n  [{time_str}]  Status: {order.get('orderStatus', 'Unknown')}")
-            print(f"  {heading}")
-            print(f"{description}")                                     #printing the heading and description, again we might not need description everytime
-            
-            if order.get("_id"):                                        #getting order id, if it does then prints the id
-                print(f" Order ID: {order['_id']}")
+            if DEBUG_MODE:                                        #getting order id, if it does then prints the id
+                print("DEBUG")
+                print(f"Order ID: {order['_id']}")
+                print("END DEBUG")
             print(" "+ "─" * 50)                                        #divider line
             
             notifications.append({"heading": heading, "description": description, "order" : order}) #adds the dictionary to the notifications and then goes back to the for loop

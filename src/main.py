@@ -1,3 +1,4 @@
+from debug import DEBUG_MODE
 from server import Server
 from menu import Menu
 from order import Order, Cart, Status
@@ -28,7 +29,7 @@ except ValueError as e:
     print("Please check your credentials and try again.")
     sys.exit(1)
  
-    #A single User object persists across login/logout cycles
+# A single User object persists across login/logout cycles
 user = User(server)
 #DB end
 
@@ -38,6 +39,23 @@ user = User(server)
 def check_logout_or_quit(answer: str) -> str:
     if answer.lower() == "quit":
         server.disconnect()
+        print("Goodbye!")
+        print("""
+        ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣠⣤⣤⣤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+        ⠀⣠⡶⠒⠒⠶⣄⣠⡴⠚⠉⠁⠀⠀⠀⠀⠀⠉⠙⠳⢦⡀⠀⠀⠀⠀⠀⠀
+        ⢠⡏⠀⠀⠀⠀⠘⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢧⡀⠀⠀⠀⠀
+        ⢸⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠋⢱⠀⠀⢠⠉⢡⠀⠀⠀⠀⠀⠻⡄⠀⠀⠀
+        ⠀⣧⠀⠀⠀⠀⠀⠀⠀⠀⢸⣧⣾⠄⠀⢸⣦⣾⠀⠀⠀⠀⠀⠀⢻⡄⠀⠀
+        ⠀⠘⢧⡀⠀⠀⠀⠀⠀⠀⠈⣿⣿⠀⠀⠸⣿⡿⠀⠀⠀⠀⠀⠀⠈⠳⣄⠀
+        ⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠈⠁⡴⠶⡆⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠹⡄
+        ⠀⠀⠀⢷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⠒⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣷
+        ⠀⠀⠀⠸⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠇
+        ⠀⠀⠀⣀⡿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡽⣿⡛⠁⠀
+        ⠀⣠⢾⣭⠀⠈⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡠⠊⠀⢠⣝⣷⡀
+        ⢠⡏⠘⠋⠀⠀⠀⠈⠑⠦⣄⣀⠀⠀⠀⠀⠀⣀⡠⠔⠋⠀⠀⠀⠈⠛⠃⢻
+        ⠈⠷⣤⣀⣀⣀⣀⣀⣀⣀⣀⣤⡽⠟⠛⠿⣭⣄⣀⣀⣀⣀⣀⣀⣀⣀⣤⠞
+        ⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠀⠀⠀
+        """)
         sys.exit(0)
     elif answer.lower() == "logout":
         raise LogoutException()
@@ -74,7 +92,7 @@ def input_int(msg: str, minimum: int = -sys.maxsize - 1, maximum: int = sys.maxs
 def login_or_signup():
     while True:
         option = input_int(
-            "\n" + "-" * 20 + "\n 1. Login\n  2. Sign Up\n> ",
+            "\n" + "-" * 20 + "\n 1. Login\n 2. Sign Up\n> ",
             1, 2
         )
  
@@ -87,7 +105,7 @@ def login_or_signup():
             print("Incorrect VIU ID or password. Please try again.")
  
         else:
-            role_opt = input_int("Role:\n  1. Customer\n  2. Delivery Agent\n> ", 1, 2)
+            role_opt = input_int("Role:\n  1. Customer\n 2. Delivery Agent\n> ", 1, 2)
             role     = "Customer" if role_opt == 1 else "Agent"
             viu_id   = input_str("VIU ID (9 digits)\n> ", r"^[0-9]{9}$")
             password = getpass("Choose a password\n> ")
@@ -243,7 +261,7 @@ def _cart_and_checkout(user_obj, cart: Cart) -> bool:
     instructions = input_str("Special instructions (press Enter to skip)\n> ")
  
     # Convert cart → one Order per vendor (spec: "potentially multiple orders")
-    orders = cart.convert_to_orders(user_obj.get_name(), instructions)
+    orders = cart.convert_to_orders(user_obj.get_current_user(), instructions)
     if not orders:
         print("No orders to place.")
         return False
@@ -261,7 +279,11 @@ def _cart_and_checkout(user_obj, cart: Cart) -> bool:
     # Place each order and send its notification
     for o in orders:
         if o.place_order():
-            print(f"  ✓ Order placed with {o.get_vendor()} (ID: {o.get_order_id()})")
+            print(f"  ✓ Order placed with {o.get_vendor()}")
+            if DEBUG_MODE:
+                print("DEBUG")
+                print(f"_id: {o.get_order_id()}")
+                print("END DEBUG")
             notif = Notification("", "", user_obj.get_name(), server, o.get_order_id())
             notif.sendNotification()
  
@@ -273,7 +295,6 @@ def _cart_and_checkout(user_obj, cart: Cart) -> bool:
 def run_customer():
     """Main loop for the Customer role."""
     customer = Customer(server, user)
-    print(f"\n  Welcome, {customer.get_name()}!")
  
     while True:
         print("\n" + "─" * 45)
@@ -306,7 +327,7 @@ def _view_customer_orders(customer: Customer):
     """Display all orders placed by this customer."""
     my_orders = [
         o for o in server.get_all_orders()
-        if o.get("customer") == customer.get_name()
+        if o.get("customer") == customer.get_current_user()
     ]
     if not my_orders:
         print("\nYou have no order history.")
@@ -331,7 +352,7 @@ def _confirm_received_flow(customer: Customer):
     """
     delivered = [
         o for o in server.get_all_orders()
-        if o.get("customer") == customer.get_name()
+        if o.get("customer") == customer.get_current_user()
         and o.get("orderStatus") == Status.DELIVERED.value
     ]
     if not delivered:
@@ -378,7 +399,7 @@ def run_agent():
     """Main loop for the Delivery Agent role."""
     agent = DeliveryAgent(server, user)
     avail_label = "Available" if agent.get_availability_status() else "Unavailable"
-    print(f"\n  Welcome, {agent.get_name()}!  ({avail_label})")
+    print(f"\n Your status is: {avail_label} for deliveries")
  
     while True:
         print("\n" + "─" * 45)
@@ -426,7 +447,7 @@ def _view_agent_active_orders(agent: DeliveryAgent):
     """
     active = [
         o for o in server.get_all_orders()
-        if o.get("agent") == agent.get_name()
+        if o.get("agent") == agent.get_current_user()
         and o.get("orderStatus") in [Status.READY_FOR_PICKUP.value, Status.IN_TRANSIT.value]
     ]
     if not active:
@@ -524,7 +545,7 @@ def _view_available_deliveries(agent: DeliveryAgent):
         order.set_order_id(order_id)
         order.set_status(selected.get("orderStatus", ""))
  
-        order.accept_order(agent.get_name())    # Status → ReadyForPickup, acceptTime set
+        order.accept_order(agent.get_current_user())    # Status → ReadyForPickup, acceptTime set
         _send_status_notification(order_id, selected.get("customer",""))
  
         print(f"\n  Deliver to: Bldg {selected.get('building')}, Rm {selected.get('room')}")
@@ -611,7 +632,7 @@ def _send_status_notification(order_id: str, customer_name: str):
  
 def _view_agent_notifications(agent: DeliveryAgent):
     """Show notifications for all orders involving this agent."""
-    notif = Notification("", "", agent.get_name(), server)
+    notif = Notification("", "", agent.get_current_user(), server)
     notif.viewNotification()
 #agent flow complete
 
@@ -643,21 +664,3 @@ while True:
         break
  
     break    # Normal exit after run_customer/run_agent return (shouldn't happen without logout)
-
-print("Goodbye!")
-print("""
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣠⣤⣤⣤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⣠⡶⠒⠒⠶⣄⣠⡴⠚⠉⠁⠀⠀⠀⠀⠀⠉⠙⠳⢦⡀⠀⠀⠀⠀⠀⠀
-⢠⡏⠀⠀⠀⠀⠘⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢧⡀⠀⠀⠀⠀
-⢸⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠋⢱⠀⠀⢠⠉⢡⠀⠀⠀⠀⠀⠻⡄⠀⠀⠀
-⠀⣧⠀⠀⠀⠀⠀⠀⠀⠀⢸⣧⣾⠄⠀⢸⣦⣾⠀⠀⠀⠀⠀⠀⢻⡄⠀⠀
-⠀⠘⢧⡀⠀⠀⠀⠀⠀⠀⠈⣿⣿⠀⠀⠸⣿⡿⠀⠀⠀⠀⠀⠀⠈⠳⣄⠀
-⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠈⠁⡴⠶⡆⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠹⡄
-⠀⠀⠀⢷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⠒⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣷
-⠀⠀⠀⠸⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠇
-⠀⠀⠀⣀⡿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡽⣿⡛⠁⠀
-⠀⣠⢾⣭⠀⠈⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡠⠊⠀⢠⣝⣷⡀
-⢠⡏⠘⠋⠀⠀⠀⠈⠑⠦⣄⣀⠀⠀⠀⠀⠀⣀⡠⠔⠋⠀⠀⠀⠈⠛⠃⢻
-⠈⠷⣤⣀⣀⣀⣀⣀⣀⣀⣀⣤⡽⠟⠛⠿⣭⣄⣀⣀⣀⣀⣀⣀⣀⣀⣤⠞
-⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠀⠀⠀
-""")
