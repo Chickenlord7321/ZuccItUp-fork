@@ -22,3 +22,7 @@ venv.bak/
 
 # ignore Pycharm stuff
 .idea
+
+# ignore for pychache stuff
+__pychache__
+__pychache__/
